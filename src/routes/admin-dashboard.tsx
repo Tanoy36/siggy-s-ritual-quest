@@ -227,8 +227,8 @@ function Select({ label, v, on, options }: { label: string; v: string; on: (v: s
 
 function SubsTab({ data, creds, delSub, onChange }: any) {
   return (
-    <div className="glass rounded-2xl overflow-hidden">
-      <table className="w-full text-sm">
+    <div className="glass rounded-2xl overflow-x-auto">
+      <table className="w-full min-w-[640px] text-sm">
         <thead className="bg-secondary/60 text-xs uppercase tracking-wider text-muted-foreground">
           <tr><th className="px-3 py-2 text-left">When</th><th className="text-left">User</th><th className="text-left">Wallet</th><th>Correct</th><th>XP</th><th>Time</th><th></th></tr>
         </thead>
