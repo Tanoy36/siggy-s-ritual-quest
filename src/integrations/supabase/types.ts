@@ -14,7 +14,149 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      announcements: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+        }
+        Relationships: []
+      }
+      banned_wallets: {
+        Row: {
+          created_at: string
+          reason: string | null
+          wallet_address: string
+        }
+        Insert: {
+          created_at?: string
+          reason?: string | null
+          wallet_address: string
+        }
+        Update: {
+          created_at?: string
+          reason?: string | null
+          wallet_address?: string
+        }
+        Relationships: []
+      }
+      riddles: {
+        Row: {
+          active: boolean
+          badge_title: string
+          clues: string[]
+          correct_answer: string
+          created_at: string
+          description: string
+          difficulty: string
+          end_time: string
+          id: string
+          image_url: string | null
+          max_winners: number
+          start_time: string
+          title: string
+          xp_reward: number
+        }
+        Insert: {
+          active?: boolean
+          badge_title?: string
+          clues?: string[]
+          correct_answer: string
+          created_at?: string
+          description: string
+          difficulty?: string
+          end_time?: string
+          id?: string
+          image_url?: string | null
+          max_winners?: number
+          start_time?: string
+          title: string
+          xp_reward?: number
+        }
+        Update: {
+          active?: boolean
+          badge_title?: string
+          clues?: string[]
+          correct_answer?: string
+          created_at?: string
+          description?: string
+          difficulty?: string
+          end_time?: string
+          id?: string
+          image_url?: string | null
+          max_winners?: number
+          start_time?: string
+          title?: string
+          xp_reward?: number
+        }
+        Relationships: []
+      }
+      submissions: {
+        Row: {
+          answer: string
+          badge_title: string | null
+          completion_time_ms: number
+          created_at: string
+          id: string
+          is_correct: boolean
+          riddle_id: string
+          signature: string | null
+          tx_hash: string | null
+          wallet_address: string
+          x_avatar_seed: string
+          x_username: string
+          xp_earned: number
+        }
+        Insert: {
+          answer: string
+          badge_title?: string | null
+          completion_time_ms?: number
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          riddle_id: string
+          signature?: string | null
+          tx_hash?: string | null
+          wallet_address: string
+          x_avatar_seed: string
+          x_username: string
+          xp_earned?: number
+        }
+        Update: {
+          answer?: string
+          badge_title?: string | null
+          completion_time_ms?: number
+          created_at?: string
+          id?: string
+          is_correct?: boolean
+          riddle_id?: string
+          signature?: string | null
+          tx_hash?: string | null
+          wallet_address?: string
+          x_avatar_seed?: string
+          x_username?: string
+          xp_earned?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "submissions_riddle_id_fkey"
+            columns: ["riddle_id"]
+            isOneToOne: false
+            referencedRelation: "riddles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
