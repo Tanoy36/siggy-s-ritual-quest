@@ -135,19 +135,18 @@ function Home() {
             )}
             {(feedQ.data ?? []).map(f => (
               <div key={f.id} className="flex items-center gap-3 rounded-xl bg-secondary/40 p-2">
-                <img src={avatarUrlFor(f.x_avatar_seed)} className="h-8 w-8 rounded-full border border-border" alt="" />
+                <img src={`https://unavatar.io/x/${f.x_username}`}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = avatarUrlFor(f.x_avatar_seed); }}
+                  className="h-8 w-8 rounded-full border border-border" alt="" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm">
                     <span className="font-semibold">@{f.x_username}</span>{" "}
-                    <span className={f.is_correct ? "text-ritual-green" : "text-muted-foreground"}>
-                      {f.is_correct ? "cracked a riddle" : "took a shot"}
-                    </span>
+                    <span className="text-muted-foreground">sealed an answer</span>
                   </div>
                   <div className="font-mono text-[10px] text-muted-foreground">
                     {new Date(f.created_at).toLocaleTimeString()}
                   </div>
                 </div>
-                {f.is_correct && <span className="text-xs font-mono text-pink-glow">+{f.xp_earned}xp</span>}
               </div>
             ))}
           </div>
