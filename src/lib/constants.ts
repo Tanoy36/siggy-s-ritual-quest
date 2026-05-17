@@ -4,7 +4,7 @@ export const RITUAL_CHAIN = {
   name: "Ritual",
   rpcUrl: "https://rpc.ritualfoundation.org",
   explorer: "https://explorer.ritualfoundation.org",
-  symbol: "RIT",
+  symbol: "RITUAL",
 } as const;
 
 export const ADMIN_USERNAME = "ritualnetriddlequest";
