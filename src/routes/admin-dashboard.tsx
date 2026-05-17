@@ -18,8 +18,6 @@ function Page() {
   const nav = useNavigate();
   const [creds, setCreds] = useState(loadAdmin());
   useEffect(() => { if (!creds) nav({ to: "/admin-login" }); }, [creds, nav]);
-  if (!creds) return null;
-
   const listAll = useServerFn(adminListAll);
   const upsert = useServerFn(adminUpsertRiddle);
   const del = useServerFn(adminDeleteRiddle);
@@ -31,30 +29,36 @@ function Page() {
   const delSub = useServerFn(adminDeleteSubmission);
   const upload = useServerFn(adminUploadImage);
 
-  const q = useQuery({ queryKey: ["admin-all"], queryFn: () => listAll({ data: creds }) });
+  const q = useQuery({
+    queryKey: ["admin-all"],
+    queryFn: () => listAll({ data: creds! }),
+    enabled: !!creds,
+  });
 
   const refresh = () => q.refetch();
   const [tab, setTab] = useState<"riddles" | "submissions" | "bans" | "announcements">("riddles");
 
   const logout = () => { clearAdmin(); setCreds(null); };
 
+  if (!creds) return null;
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
+    <div className="mx-auto max-w-7xl px-4 py-6 md:py-10 md:px-8">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3 md:mb-8">
+        <div className="min-w-0">
           <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Mods & Radiant Ritualists Console</div>
-          <h1 className="font-display text-3xl font-bold text-holographic">Admin Dashboard</h1>
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-holographic">Admin Dashboard</h1>
           <p className="mt-1 text-xs text-muted-foreground">Mods & Radiant Ritualists can create quests.</p>
         </div>
-        <button onClick={logout} className="inline-flex items-center gap-2 rounded-xl glass px-4 py-2 text-sm hover:text-destructive">
+        <button onClick={logout} className="inline-flex items-center gap-2 rounded-xl glass px-4 py-2 text-sm hover:text-destructive active:scale-95 transition-transform">
           <LogOut className="size-4" /> Logout
         </button>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-6 -mx-4 px-4 flex gap-2 overflow-x-auto pb-2 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible">
         {(["riddles", "submissions", "bans", "announcements"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`rounded-xl px-4 py-2 text-sm transition-smooth ${tab === t ? "bg-gradient-to-r from-primary to-accent text-primary-foreground glow-purple" : "glass hover:bg-secondary/60"}`}>
+            className={`shrink-0 rounded-xl px-4 py-2 text-sm capitalize active:scale-95 transition-transform ${tab === t ? "bg-gradient-to-r from-primary to-accent text-primary-foreground" : "glass hover:bg-secondary/60"}`}>
             {t}
           </button>
         ))}
@@ -89,9 +93,9 @@ function RiddlesTab({ data, creds, upsert, del, toggle, upload, onChange }: {
   });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-4 md:gap-6">
       <div className="space-y-3">
-        <button onClick={() => setEditing(blank())} className="w-full rounded-xl bg-gradient-to-r from-primary to-accent py-3 text-sm font-semibold inline-flex items-center justify-center gap-2 glow-purple">
+        <button onClick={() => setEditing(blank())} className="w-full rounded-xl bg-gradient-to-r from-primary to-accent py-3 text-sm font-semibold inline-flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
           <Plus className="size-4" /> New riddle
         </button>
         {data.map(r => (
@@ -150,7 +154,7 @@ function RiddleForm({ editing, setEditing, creds, upsert, upload, onSaved }: any
   };
 
   return (
-    <div className="glass-strong border-glow rounded-2xl p-5 space-y-3 sticky top-24 self-start">
+    <div className="glass-strong rounded-2xl p-4 md:p-5 space-y-3 lg:sticky lg:top-24 self-start">
       <Input label="Title" v={f.title} on={(v) => setF({ ...f, title: v })} />
       <Textarea label="Description" v={f.description} on={(v) => setF({ ...f, description: v })} />
       <Textarea label="Main hint (shown publicly on the quest card)" v={f.main_hint || ""} on={(v) => setF({ ...f, main_hint: v })} />
@@ -223,8 +227,8 @@ function Select({ label, v, on, options }: { label: string; v: string; on: (v: s
 
 function SubsTab({ data, creds, delSub, onChange }: any) {
   return (
-    <div className="glass rounded-2xl overflow-hidden">
-      <table className="w-full text-sm">
+    <div className="glass rounded-2xl overflow-x-auto">
+      <table className="w-full min-w-[640px] text-sm">
         <thead className="bg-secondary/60 text-xs uppercase tracking-wider text-muted-foreground">
           <tr><th className="px-3 py-2 text-left">When</th><th className="text-left">User</th><th className="text-left">Wallet</th><th>Correct</th><th>XP</th><th>Time</th><th></th></tr>
         </thead>

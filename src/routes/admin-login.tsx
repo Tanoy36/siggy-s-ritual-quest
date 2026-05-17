@@ -1,28 +1,31 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useServerFn } from "@tanstack/react-start";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Shield, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { adminLogin } from "@/lib/admin.functions";
-import { saveAdmin } from "@/lib/admin-session";
+import { saveAdmin, loadAdmin } from "@/lib/admin-session";
+import { ADMIN_USERNAME, ADMIN_PASSWORD } from "@/lib/constants";
 import { Siggy } from "@/components/Siggy";
 
 export const Route = createFileRoute("/admin-login")({ component: Page });
 
 function Page() {
   const nav = useNavigate();
-  const fn = useServerFn(adminLogin);
   const [u, setU] = useState(""); const [p, setP] = useState("");
   const [loading, setLoading] = useState(false); const [err, setErr] = useState("");
+  // Persistent session: skip the form if already logged in
+  useEffect(() => { if (loadAdmin()) nav({ to: "/admin-dashboard" }); }, [nav]);
   const submit = async (e: React.FormEvent) => {
     e.preventDefault(); setErr(""); setLoading(true);
-    try {
-      await fn({ data: { username: u, password: p } });
-      saveAdmin({ username: u, password: p });
+    // Instant local check — no server roundtrip on login itself.
+    // Server functions still re-verify credentials on every privileged call.
+    if (u.trim() === ADMIN_USERNAME && p === ADMIN_PASSWORD) {
+      saveAdmin({ username: u.trim(), password: p });
       toast.success("Welcome, Radiant Ritualist");
       nav({ to: "/admin-dashboard" });
-    } catch (e) { setErr((e as Error).message); }
-    finally { setLoading(false); }
+      return;
+    }
+    setErr("Invalid credentials");
+    setLoading(false);
   };
   return (
     <div className="mx-auto grid max-w-5xl grid-cols-1 items-center gap-12 px-4 py-20 md:grid-cols-2 md:px-8">
