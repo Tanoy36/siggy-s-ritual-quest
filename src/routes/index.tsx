@@ -47,8 +47,6 @@ function Home() {
   const riddles = riddlesQ.data ?? [];
   const active = riddles.filter(r => r.active && new Date(r.end_time).getTime() > Date.now());
   const ended = riddles.filter(r => !r.active || new Date(r.end_time).getTime() <= Date.now());
-  const onlineCount = (feedQ.data ?? []).filter(f => Date.now() - new Date(f.created_at).getTime() < 1000 * 60 * 15).length + 12;
-
   return (
     <div className="mx-auto max-w-7xl px-4 pb-24 md:px-8">
       {/* HERO */}
@@ -56,7 +54,7 @@ function Home() {
         <div>
           <div className="mb-5 inline-flex items-center gap-2 rounded-full glass border-glow px-3 py-1 text-xs font-medium">
             <Radio className="size-3.5 text-ritual-green animate-pulse" />
-            <span className="text-ritual-green">{onlineCount} ritualists online</span>
+            <span className="text-ritual-green">Ritual Chain Online</span>
             <span className="text-muted-foreground">· chain {RITUAL_CHAIN.id}</span>
           </div>
           <h1 className="font-display text-5xl font-bold leading-[1.05] tracking-tight md:text-7xl">

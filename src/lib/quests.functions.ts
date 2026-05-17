@@ -99,7 +99,7 @@ const SubmitSchema = z.object({
   wallet: z.string().regex(/^0x[a-fA-F0-9]{40}$/),
   xUsername: z.string().min(1).max(60).regex(/^@?[A-Za-z0-9_]{1,30}$/),
   answer: z.string().min(1).max(300),
-  signature: z.string().min(10).max(400),
+  txHash: z.string().regex(/^0x[a-fA-F0-9]{64}$/),
   startedAt: z.number().int().positive(),
 });
 
@@ -163,7 +163,7 @@ export const submitAnswer = createServerFn({ method: "POST" })
         xp_earned: xpEarned,
         badge_title: badge,
         completion_time_ms: completionMs,
-        signature: data.signature,
+        tx_hash: data.txHash,
       })
       .select("*")
       .single();
