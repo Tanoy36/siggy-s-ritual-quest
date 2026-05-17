@@ -93,9 +93,9 @@ function RiddlesTab({ data, creds, upsert, del, toggle, upload, onChange }: {
   });
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.2fr] gap-4 md:gap-6">
       <div className="space-y-3">
-        <button onClick={() => setEditing(blank())} className="w-full rounded-xl bg-gradient-to-r from-primary to-accent py-3 text-sm font-semibold inline-flex items-center justify-center gap-2 glow-purple">
+        <button onClick={() => setEditing(blank())} className="w-full rounded-xl bg-gradient-to-r from-primary to-accent py-3 text-sm font-semibold inline-flex items-center justify-center gap-2 active:scale-[0.98] transition-transform">
           <Plus className="size-4" /> New riddle
         </button>
         {data.map(r => (
@@ -154,7 +154,7 @@ function RiddleForm({ editing, setEditing, creds, upsert, upload, onSaved }: any
   };
 
   return (
-    <div className="glass-strong border-glow rounded-2xl p-5 space-y-3 sticky top-24 self-start">
+    <div className="glass-strong rounded-2xl p-4 md:p-5 space-y-3 lg:sticky lg:top-24 self-start">
       <Input label="Title" v={f.title} on={(v) => setF({ ...f, title: v })} />
       <Textarea label="Description" v={f.description} on={(v) => setF({ ...f, description: v })} />
       <Textarea label="Main hint (shown publicly on the quest card)" v={f.main_hint || ""} on={(v) => setF({ ...f, main_hint: v })} />
