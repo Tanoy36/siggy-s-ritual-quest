@@ -57,11 +57,13 @@ export type Database = {
           clues: string[]
           correct_answer: string
           created_at: string
+          creator_x_username: string
           description: string
           difficulty: string
           end_time: string
           id: string
           image_url: string | null
+          main_hint: string
           max_winners: number
           start_time: string
           title: string
@@ -73,11 +75,13 @@ export type Database = {
           clues?: string[]
           correct_answer: string
           created_at?: string
+          creator_x_username?: string
           description: string
           difficulty?: string
           end_time?: string
           id?: string
           image_url?: string | null
+          main_hint?: string
           max_winners?: number
           start_time?: string
           title: string
@@ -89,11 +93,13 @@ export type Database = {
           clues?: string[]
           correct_answer?: string
           created_at?: string
+          creator_x_username?: string
           description?: string
           difficulty?: string
           end_time?: string
           id?: string
           image_url?: string | null
+          main_hint?: string
           max_winners?: number
           start_time?: string
           title?: string
@@ -172,11 +178,13 @@ export type Database = {
           badge_title: string | null
           clues: string[] | null
           created_at: string | null
+          creator_x_username: string | null
           description: string | null
           difficulty: string | null
           end_time: string | null
           id: string | null
           image_url: string | null
+          main_hint: string | null
           max_winners: number | null
           start_time: string | null
           title: string | null
@@ -187,11 +195,13 @@ export type Database = {
           badge_title?: string | null
           clues?: string[] | null
           created_at?: string | null
+          creator_x_username?: string | null
           description?: string | null
           difficulty?: string | null
           end_time?: string | null
           id?: string | null
           image_url?: string | null
+          main_hint?: string | null
           max_winners?: number | null
           start_time?: string | null
           title?: string | null
@@ -202,11 +212,13 @@ export type Database = {
           badge_title?: string | null
           clues?: string[] | null
           created_at?: string | null
+          creator_x_username?: string | null
           description?: string | null
           difficulty?: string | null
           end_time?: string | null
           id?: string | null
           image_url?: string | null
+          main_hint?: string | null
           max_winners?: number | null
           start_time?: string | null
           title?: string | null

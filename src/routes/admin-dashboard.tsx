@@ -42,8 +42,9 @@ function Page() {
     <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Radiant Ritualist Console</div>
+          <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Mods & Radiant Ritualists Console</div>
           <h1 className="font-display text-3xl font-bold text-holographic">Admin Dashboard</h1>
+          <p className="mt-1 text-xs text-muted-foreground">Mods & Radiant Ritualists can create quests.</p>
         </div>
         <button onClick={logout} className="inline-flex items-center gap-2 rounded-xl glass px-4 py-2 text-sm hover:text-destructive">
           <LogOut className="size-4" /> Logout
@@ -81,6 +82,7 @@ function RiddlesTab({ data, creds, upsert, del, toggle, upload, onChange }: {
   const blank = () => ({
     title: "", description: "", image_url: null, clues: [], correct_answer: "",
     difficulty: "medium", xp_reward: 100, badge_title: "Ritualist",
+    main_hint: "", creator_x_username: "",
     start_time: new Date().toISOString().slice(0, 16),
     end_time: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 16),
     max_winners: 100, active: true,
@@ -151,9 +153,10 @@ function RiddleForm({ editing, setEditing, creds, upsert, upload, onSaved }: any
     <div className="glass-strong border-glow rounded-2xl p-5 space-y-3 sticky top-24 self-start">
       <Input label="Title" v={f.title} on={(v) => setF({ ...f, title: v })} />
       <Textarea label="Description" v={f.description} on={(v) => setF({ ...f, description: v })} />
+      <Textarea label="Main hint (shown publicly on the quest card)" v={f.main_hint || ""} on={(v) => setF({ ...f, main_hint: v })} />
       <div className="grid grid-cols-2 gap-3">
         <Input label="Correct answer" v={f.correct_answer} on={(v) => setF({ ...f, correct_answer: v })} />
-        <Input label="Badge title" v={f.badge_title} on={(v) => setF({ ...f, badge_title: v })} />
+        <Input label="Creator X username (without @)" v={f.creator_x_username || ""} on={(v) => setF({ ...f, creator_x_username: v.replace(/^@/, "") })} />
       </div>
       <div className="grid grid-cols-3 gap-3">
         <Select label="Difficulty" v={f.difficulty} on={(v) => setF({ ...f, difficulty: v })} options={["easy", "medium", "hard", "legendary"]} />
@@ -176,7 +179,17 @@ function RiddleForm({ editing, setEditing, creds, upsert, upload, onSaved }: any
           <input type="file" accept="image/png,image/jpeg,image/webp" hidden
             onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])} />
         </label>
-        {f.image_url && <img src={f.image_url} className="mt-2 max-h-40 rounded-lg" alt="" />}
+        {f.image_url && (
+          <div className="mt-3 overflow-hidden rounded-xl border border-border/60 bg-secondary/30">
+            <img src={f.image_url} alt="" loading="lazy" className="w-full h-auto object-contain max-h-80" />
+          </div>
+        )}
+        {f.creator_x_username && (
+          <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
+            <img src={`https://unavatar.io/x/${f.creator_x_username}`} alt="" className="size-6 rounded-full ring-1 ring-accent/60" />
+            Preview: uploaded by @{f.creator_x_username}
+          </div>
+        )}
       </div>
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={f.active} onChange={(e) => setF({ ...f, active: e.target.checked })} /> Active

@@ -16,6 +16,8 @@ export type PublicRiddle = {
   max_winners: number;
   active: boolean;
   created_at: string;
+  main_hint: string;
+  creator_x_username: string;
 };
 
 export const listRiddles = createServerFn({ method: "GET" }).handler(async () => {

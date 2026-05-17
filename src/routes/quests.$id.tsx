@@ -82,15 +82,38 @@ function Page() {
         </div>
         <h1 className="font-display text-4xl md:text-5xl font-bold text-holographic">{riddle.title}</h1>
         <p className="mt-3 text-muted-foreground">{riddle.description}</p>
+        {riddle.main_hint && (
+          <div className="mt-4 flex items-start gap-2 rounded-xl border border-accent/30 bg-accent/5 p-3 text-sm">
+            <Sparkles className="size-4 mt-0.5 text-accent shrink-0" />
+            <span className="italic text-foreground/90">{riddle.main_hint}</span>
+          </div>
+        )}
         <div className="mt-4 flex flex-wrap gap-2 text-xs font-mono text-muted-foreground">
           <span className="rounded-full bg-secondary/60 px-3 py-1">⏱ {ended ? "ended" : countdown(riddle.end_time)}</span>
-          <span className="rounded-full bg-secondary/60 px-3 py-1">🏆 {riddle.badge_title}</span>
           <span className="rounded-full bg-secondary/60 px-3 py-1">👥 max {riddle.max_winners}</span>
         </div>
 
         {riddle.image_url && (
-          <div className="mt-6 overflow-hidden rounded-2xl border border-border glow-cyan">
-            <img src={riddle.image_url} alt="" className="w-full object-cover" />
+          <div className="mt-6 overflow-hidden rounded-2xl border border-border glow-cyan bg-secondary/30">
+            <img src={riddle.image_url} alt={riddle.title} loading="lazy"
+              className="w-full h-auto object-contain max-h-[520px] opacity-0 transition-opacity duration-500"
+              onLoad={(e) => e.currentTarget.classList.remove("opacity-0")} />
+          </div>
+        )}
+
+        {riddle.creator_x_username && (
+          <div className="mt-6 inline-flex items-center gap-3 rounded-2xl border border-accent/40 bg-secondary/40 px-4 py-3 glow-cyan">
+            <div className="relative">
+              <img src={`https://unavatar.io/x/${riddle.creator_x_username}`} alt={`@${riddle.creator_x_username}`}
+                className="size-10 rounded-full ring-2 ring-accent/70"
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = `https://api.dicebear.com/7.x/identicon/svg?seed=${riddle.creator_x_username}`; }} />
+              <span className="absolute -bottom-0.5 -right-0.5 size-3 rounded-full bg-accent ring-2 ring-background" />
+            </div>
+            <div className="leading-tight">
+              <div className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">Uploaded by</div>
+              <a href={`https://x.com/${riddle.creator_x_username}`} target="_blank" rel="noreferrer"
+                className="text-sm font-semibold text-foreground hover:text-accent">@{riddle.creator_x_username}</a>
+            </div>
           </div>
         )}
 
