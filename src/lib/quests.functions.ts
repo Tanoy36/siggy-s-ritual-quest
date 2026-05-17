@@ -73,7 +73,7 @@ export const getLeaderboard = createServerFn({ method: "GET" })
 export const getRecentActivity = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
     .from("submissions")
-    .select("id, wallet_address, x_username, x_avatar_seed, is_correct, xp_earned, created_at, riddle_id")
+    .select("id, x_username, x_avatar_seed, is_correct, xp_earned, created_at, riddle_id")
     .order("created_at", { ascending: false })
     .limit(20);
   if (error) throw new Error(error.message);
@@ -124,12 +124,129 @@ export const getRiddleParticipants = createServerFn({ method: "GET" })
   .handler(async ({ data }) => {
     const { data: rows, error } = await supabaseAdmin
       .from("submissions")
-      .select("id, wallet_address, x_username, x_avatar_seed, created_at, tx_hash")
+      .select("id, x_username, x_avatar_seed, created_at, tx_hash")
       .eq("riddle_id", data.riddleId)
       .order("created_at", { ascending: true })
       .limit(200);
     if (error) throw new Error(error.message);
     return rows ?? [];
+  });
+
+/* ============================================================
+ * Performers leaderboard
+ * Aggregates submissions per X-handle. Wallet addresses are
+ * never returned to clients. Used by:
+ *   - global "/leaderboard"
+ *   - home page top section
+ *   - per-quest sidebar (pass riddleId)
+ * Sorting rules:
+ *   winners first → xp desc → best ms asc → first-seen asc
+ * Streak = consecutive most-recent revealed-correct submissions
+ * for that X-handle across ALL quests (pending quests do not
+ * break a streak).
+ * ============================================================ */
+export type PerformerRow = {
+  x_username: string;
+  x_avatar_seed: string;
+  xp: number;
+  wins: number;
+  attempts: number;
+  streak: number;
+  best_ms: number | null;
+  last_at: string;
+  status: "winner" | "incorrect" | "pending";
+};
+
+export const getPerformers = createServerFn({ method: "GET" })
+  .inputValidator((d: { riddleId?: string }) =>
+    z.object({ riddleId: z.string().uuid().optional() }).parse(d ?? {}),
+  )
+  .handler(async ({ data }): Promise<PerformerRow[]> => {
+    const { data: subs, error } = await supabaseAdmin
+      .from("submissions")
+      .select("riddle_id, x_username, x_avatar_seed, is_correct, xp_earned, completion_time_ms, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5000);
+    if (error) throw new Error(error.message);
+
+    const allSubs = subs ?? [];
+    const ids = Array.from(new Set(allSubs.map((s) => s.riddle_id)));
+    let endMap = new Map<string, number>();
+    if (ids.length) {
+      const { data: rids } = await supabaseAdmin
+        .from("riddles").select("id, end_time").in("id", ids);
+      endMap = new Map((rids ?? []).map((r) => [r.id, new Date(r.end_time).getTime()]));
+    }
+    const now = Date.now();
+    const isRevealed = (rid: string) => (endMap.get(rid) ?? Infinity) <= now;
+
+    type Group = { handle: string; seed: string; subs: typeof allSubs };
+    const byUser = new Map<string, Group>();
+    for (const s of allSubs) {
+      const key = s.x_username.toLowerCase();
+      let g = byUser.get(key);
+      if (!g) { g = { handle: key, seed: s.x_avatar_seed || key, subs: [] }; byUser.set(key, g); }
+      g.subs.push(s);
+    }
+
+    const out: PerformerRow[] = [];
+    for (const [, u] of byUser) {
+      const sorted = [...u.subs].sort(
+        (a, b) => +new Date(b.created_at) - +new Date(a.created_at),
+      );
+
+      // Global streak: most-recent consecutive revealed-correct.
+      let streak = 0;
+      for (const s of sorted) {
+        if (!isRevealed(s.riddle_id)) continue;
+        if (s.is_correct) streak += 1; else break;
+      }
+
+      let xp = 0, wins = 0, bestMs: number | null = null;
+      for (const s of sorted) {
+        if (isRevealed(s.riddle_id) && s.is_correct) {
+          xp += s.xp_earned;
+          wins += 1;
+          if (bestMs === null || s.completion_time_ms < bestMs) bestMs = s.completion_time_ms;
+        }
+      }
+
+      let status: PerformerRow["status"] = "pending";
+      if (data.riddleId) {
+        const here = sorted.find((s) => s.riddle_id === data.riddleId);
+        if (!here) continue;
+        status = !isRevealed(here.riddle_id)
+          ? "pending"
+          : here.is_correct ? "winner" : "incorrect";
+      } else {
+        const hasRevealedWrong = sorted.some(
+          (s) => isRevealed(s.riddle_id) && !s.is_correct,
+        );
+        status = wins > 0 ? "winner" : (hasRevealedWrong ? "incorrect" : "pending");
+      }
+
+      out.push({
+        x_username: u.handle,
+        x_avatar_seed: u.seed,
+        xp, wins, attempts: u.subs.length, streak,
+        best_ms: bestMs,
+        last_at: sorted[0].created_at,
+        status,
+      });
+    }
+
+    const rank = (r: PerformerRow) =>
+      r.status === "winner" ? 0 : r.status === "pending" ? 1 : 2;
+    out.sort((a, b) => {
+      if (rank(a) !== rank(b)) return rank(a) - rank(b);
+      if (a.xp !== b.xp) return b.xp - a.xp;
+      if (b.streak !== a.streak) return b.streak - a.streak;
+      const am = a.best_ms ?? Infinity, bm = b.best_ms ?? Infinity;
+      if (am !== bm) return am - bm;
+      return +new Date(a.last_at) - +new Date(b.last_at);
+    });
+
+    return out.slice(0, 100);
   });
 
 const SubmitSchema = z.object({
