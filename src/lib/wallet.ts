@@ -1,4 +1,14 @@
 import { RITUAL_CHAIN } from "./constants";
+import { keccak256, toHex, encodeFunctionData } from "viem";
+import contractArtifact from "@/contracts/RitualRiddleQuest.json";
+
+export const CONTRACT_ADDRESS: string =
+  (contractArtifact as { address: string }).address || "";
+export const CONTRACT_ABI = (contractArtifact as { abi: unknown[] }).abi;
+
+/** Hash an offchain UUID into the bytes32 riddleId used by the contract. */
+export const hashRiddleId = (uuid: string): `0x${string}` =>
+  keccak256(toHex(uuid));
 
 type Eth = {
   request: (a: { method: string; params?: unknown[] }) => Promise<unknown>;
@@ -51,27 +61,42 @@ export async function signRitualMessage(wallet: string, riddleId: string): Promi
   return (await eth.request({ method: "personal_sign", params: [hex, wallet] })) as string;
 }
 
-// Send a real on-chain quest interaction: 0-value self-transaction on Ritual chain.
-// This proves wallet ownership and produces a real tx hash + explorer link.
-export async function sendRitualQuestTx(wallet: string, riddleId: string): Promise<string> {
+// Send a real on-chain quest submission. If the RitualRiddleQuest contract
+// is deployed (address present in src/contracts/RitualRiddleQuest.json) we
+// call submit(bytes32,string,string). Otherwise we fall back to a 0-value
+// self-transaction with a memo so the flow still works pre-deploy.
+export async function sendRitualQuestTx(
+  wallet: string,
+  riddleId: string,
+  opts: { xUsername: string; answer: string },
+): Promise<string> {
   const eth = getEthereum();
   if (!eth) throw new Error("No wallet detected");
   await ensureRitualChain();
 
-  // Encode a short memo as calldata (hex of "RRQ:<riddleId>").
-  const memo = `RRQ:${riddleId}`;
-  const data =
-    "0x" +
-    Array.from(new TextEncoder().encode(memo))
-      .map(b => b.toString(16).padStart(2, "0"))
-      .join("");
+  const txParams: Record<string, string> = { from: wallet, value: "0x0" };
 
-  const txParams: Record<string, string> = {
-    from: wallet,
-    to: wallet, // self-tx, no funds leave the wallet
-    value: "0x0",
-    data,
-  };
+  if (CONTRACT_ADDRESS) {
+    txParams.to = CONTRACT_ADDRESS;
+    txParams.data = encodeFunctionData({
+      abi: CONTRACT_ABI as never,
+      functionName: "submit",
+      args: [
+        hashRiddleId(riddleId),
+        opts.xUsername.replace(/^@/, ""),
+        opts.answer,
+      ],
+    });
+  } else {
+    // Pre-deploy fallback: encode a short memo as calldata in a self-tx.
+    const memo = `RRQ:${riddleId}`;
+    txParams.to = wallet;
+    txParams.data =
+      "0x" +
+      Array.from(new TextEncoder().encode(memo))
+        .map((b) => b.toString(16).padStart(2, "0"))
+        .join("");
+  }
 
   // Best-effort gas estimation. Fall back to a safe default if RPC rejects.
   try {
@@ -81,7 +106,7 @@ export async function sendRitualQuestTx(wallet: string, riddleId: string): Promi
     })) as string;
     if (gas) txParams.gas = gas;
   } catch {
-    txParams.gas = "0x186A0"; // 100k
+    txParams.gas = CONTRACT_ADDRESS ? "0x4C4B40" /* 5M */ : "0x186A0" /* 100k */;
   }
 
   const hash = (await eth.request({
