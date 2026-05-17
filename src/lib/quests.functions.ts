@@ -47,6 +47,16 @@ export const getLeaderboard = createServerFn({ method: "GET" })
     z.object({ riddleId: z.string().uuid().optional() }).parse(d ?? {}),
   )
   .handler(async ({ data }) => {
+    // If scoped to a single riddle, gate winners behind reveal (quest end).
+    if (data.riddleId) {
+      const { data: r } = await supabaseAdmin
+        .from("riddles")
+        .select("end_time")
+        .eq("id", data.riddleId)
+        .maybeSingle();
+      const revealed = !!r && new Date(r.end_time).getTime() <= Date.now();
+      if (!revealed) return [];
+    }
     let q = supabaseAdmin
       .from("submissions")
       .select("id, riddle_id, wallet_address, x_username, x_avatar_seed, is_correct, xp_earned, badge_title, completion_time_ms, created_at")
@@ -91,7 +101,35 @@ export const getMySubmission = createServerFn({ method: "GET" })
       .eq("riddle_id", data.riddleId)
       .ilike("wallet_address", data.wallet)
       .maybeSingle();
-    return row;
+    if (!row) return null;
+    const { data: r } = await supabaseAdmin
+      .from("riddles")
+      .select("end_time")
+      .eq("id", data.riddleId)
+      .maybeSingle();
+    const revealed = !!r && new Date(r.end_time).getTime() <= Date.now();
+    if (!revealed) {
+      // Strip correctness/xp/badge until the quest ends.
+      return { ...row, is_correct: null, xp_earned: 0, badge_title: null, answer: null, revealed: false };
+    }
+    return { ...row, revealed: true };
+  });
+
+/** Public participants list for a riddle — visible before reveal.
+ *  Hides correctness, XP, and the answer text. */
+export const getRiddleParticipants = createServerFn({ method: "GET" })
+  .inputValidator((d: { riddleId: string }) =>
+    z.object({ riddleId: z.string().uuid() }).parse(d),
+  )
+  .handler(async ({ data }) => {
+    const { data: rows, error } = await supabaseAdmin
+      .from("submissions")
+      .select("id, wallet_address, x_username, x_avatar_seed, created_at, tx_hash")
+      .eq("riddle_id", data.riddleId)
+      .order("created_at", { ascending: true })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return rows ?? [];
   });
 
 const SubmitSchema = z.object({
@@ -171,9 +209,11 @@ export const submitAnswer = createServerFn({ method: "POST" })
 
     return {
       submission: inserted,
-      correct: isCorrect,
+      // Hide correctness from clients until the quest ends.
+      correct: null as boolean | null,
       capReached,
-      xpEarned,
-      badge,
+      xpEarned: 0,
+      badge: null as string | null,
+      revealed: false,
     };
   });

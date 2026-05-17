@@ -3,9 +3,9 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Lock, Loader2, Sparkles, Download, Twitter, ExternalLink, Trophy, Zap, Clock, Eye } from "lucide-react";
+import { Lock, Loader2, Sparkles, Download, Twitter, ExternalLink, Trophy, Zap, Clock, Eye, Hourglass } from "lucide-react";
 import * as htmlToImage from "html-to-image";
-import { getRiddle, getLeaderboard, submitAnswer, getMySubmission } from "@/lib/quests.functions";
+import { getRiddle, getLeaderboard, submitAnswer, getMySubmission, getRiddleParticipants } from "@/lib/quests.functions";
 import { LeaderboardList } from "@/components/LeaderboardList";
 import { Siggy, SiggyMini } from "@/components/Siggy";
 import { useWallet } from "@/components/WalletButton";
@@ -24,9 +24,11 @@ function Page() {
   const getLb = useServerFn(getLeaderboard);
   const getMy = useServerFn(getMySubmission);
   const submit = useServerFn(submitAnswer);
+  const getParts = useServerFn(getRiddleParticipants);
 
   const r = useQuery({ queryKey: ["riddle", id], queryFn: () => getR({ data: { id } }) });
   const lb = useQuery({ queryKey: ["lb", id], queryFn: () => getLb({ data: { riddleId: id } }) });
+  const parts = useQuery({ queryKey: ["parts", id], queryFn: () => getParts({ data: { riddleId: id } }) });
 
   const { addr, connect } = useWallet();
   const my = useQuery({
@@ -37,15 +39,17 @@ function Page() {
 
   useEffect(() => {
     const ch = supabase.channel(`r-${id}`)
-      .on("postgres_changes", { event: "*", schema: "public", table: "submissions", filter: `riddle_id=eq.${id}` }, () => lb.refetch())
+      .on("postgres_changes", { event: "*", schema: "public", table: "submissions", filter: `riddle_id=eq.${id}` }, () => {
+        lb.refetch(); parts.refetch();
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [id, lb]);
+  }, [id, lb, parts]);
 
   const startedAt = useMemo(() => Date.now(), [id]);
   const [answer, setAnswer] = useState("");
   const [xUser, setXUser] = useState("");
-  const [showCard, setShowCard] = useState<null | { correct: boolean; xp: number; badge: string | null; ms: number; txHash: string }>(null);
+  const [showCard, setShowCard] = useState<null | { correct: boolean | null; xp: number; badge: string | null; ms: number; txHash: string }>(null);
 
   const m = useMutation({
     mutationFn: async () => {
@@ -62,10 +66,11 @@ function Page() {
       return { ...res, txHash };
     },
     onSuccess: (res) => {
-      lb.refetch(); my.refetch();
+      lb.refetch(); my.refetch(); parts.refetch();
       setShowCard({ correct: res.correct, xp: res.xpEarned, badge: res.badge, ms: res.submission.completion_time_ms, txHash: res.txHash });
-      if (res.correct) toast.success("Riddle cracked!", { description: `+${res.xpEarned} XP earned` });
-      else toast.error("Not quite", { description: "Your answer didn't match. One shot per wallet." });
+      toast.success("Submission sealed onchain", {
+        description: "Siggy is evaluating · results revealed when the quest ends.",
+      });
     },
     onError: (e) => toast.error("Submission failed", { description: (e as Error).message }),
   });
@@ -73,7 +78,8 @@ function Page() {
   if (r.isLoading) return <Loading />;
   if (r.error || !r.data) return <div className="p-16 text-center text-destructive">Riddle not found.</div>;
   const riddle = r.data;
-  const ended = new Date(riddle.end_time).getTime() < Date.now();
+  const ended = new Date(riddle.end_time).getTime() <= Date.now();
+  const revealed = ended; // future: also true on admin finalize
   const locked = !addr;
   const already = !!my.data;
 
@@ -133,12 +139,27 @@ function Page() {
 
         <div className="mt-8 glass-strong border-glow rounded-2xl p-6">
           {already ? (
-            <div className="text-center">
-              <div className={`text-3xl mb-2 ${my.data!.is_correct ? "text-ritual-green" : "text-muted-foreground"}`}>
-                {my.data!.is_correct ? "✓ You cracked it" : "✗ Already submitted"}
+            revealed ? (
+              <div className="text-center">
+                <div className={`text-3xl mb-2 ${my.data!.is_correct ? "text-ritual-green" : "text-muted-foreground"}`}>
+                  {my.data!.is_correct ? "✓ You cracked it" : "✗ Not this time"}
+                </div>
+                <p className="text-sm text-muted-foreground">Time: {fmtMs(my.data!.completion_time_ms)}</p>
               </div>
-              <p className="text-sm text-muted-foreground">One submission per wallet. Time: {fmtMs(my.data!.completion_time_ms)}</p>
-            </div>
+            ) : (
+              <div className="text-center space-y-2">
+                <Hourglass className="mx-auto size-7 text-accent animate-pulse" />
+                <div className="font-display text-xl text-holographic">Submission sealed on Ritual Chain</div>
+                <p className="text-sm italic text-muted-foreground">
+                  Siggy is evaluating your answer… your fate will be revealed when the quest ends.
+                </p>
+                <p className="text-[11px] font-mono text-muted-foreground">Reveal in {countdown(riddle.end_time)}</p>
+                <button onClick={() => setShowCard({ correct: null, xp: 0, badge: null, ms: my.data!.completion_time_ms, txHash: my.data!.tx_hash ?? "" })}
+                  className="mt-2 rounded-xl bg-gradient-to-r from-primary to-accent px-4 py-2 text-xs font-semibold glow-cyan">
+                  View submission card
+                </button>
+              </div>
+            )
           ) : ended ? (
             <div className="text-center text-muted-foreground">This quest has ended.</div>
           ) : locked ? (
@@ -173,6 +194,7 @@ function Page() {
         {showCard && (
           <ShareCardModal data={{
             ...showCard,
+            revealed,
             handle: xUser.replace(/^@/, "") || my.data?.x_username || "ritualist",
             title: riddle.title, badge: showCard.badge ?? riddle.badge_title,
           }} onClose={() => setShowCard(null)} />
@@ -180,9 +202,82 @@ function Page() {
       </div>
 
       <aside>
-        <h3 className="mb-3 font-display text-lg font-bold">Riddle Leaderboard</h3>
-        <LeaderboardList rows={lb.data ?? []} />
+        {revealed ? (
+          <>
+            <h3 className="mb-3 font-display text-lg font-bold">Winners Revealed</h3>
+            <LeaderboardList rows={lb.data ?? []} />
+          </>
+        ) : (
+          <ParticipantsPanel
+            rows={parts.data ?? []}
+            endTime={riddle.end_time}
+          />
+        )}
       </aside>
+    </div>
+  );
+}
+
+function ParticipantsPanel({
+  rows,
+  endTime,
+}: {
+  rows: { id: string; wallet_address: string; x_username: string; x_avatar_seed: string; created_at: string }[];
+  endTime: string;
+}) {
+  return (
+    <div className="space-y-4">
+      <div className="glass-strong rounded-2xl p-5 border border-accent/30 glow-purple">
+        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-accent">
+          <Hourglass className="size-3.5 animate-pulse" /> Awaiting Reveal
+        </div>
+        <div className="mt-2 font-display text-2xl font-bold text-holographic">
+          Siggy has not yet judged
+        </div>
+        <p className="mt-1 text-sm italic text-muted-foreground">
+          The chain remembers everything. Winners are revealed when the quest ends.
+        </p>
+        <div className="mt-3 flex items-center justify-between text-xs font-mono">
+          <span className="text-muted-foreground">Reveal in</span>
+          <span className="text-accent">{countdown(endTime)}</span>
+        </div>
+        <div className="mt-3 flex items-center justify-between text-xs font-mono">
+          <span className="text-muted-foreground">Participants</span>
+          <span className="text-foreground">{rows.length}</span>
+        </div>
+      </div>
+
+      <h3 className="font-display text-sm uppercase tracking-[0.2em] text-muted-foreground">
+        Sealed Submissions
+      </h3>
+      {rows.length === 0 ? (
+        <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">
+          No one has dared yet · be the first to seal an answer.
+        </div>
+      ) : (
+        <ol className="space-y-2">
+          {rows.map((p, i) => (
+            <li key={p.id} className="glass flex items-center gap-3 rounded-xl p-3">
+              <span className="w-6 text-right font-mono text-xs text-muted-foreground">{i + 1}</span>
+              <img
+                src={`https://unavatar.io/x/${p.x_username}`}
+                onError={(e) => { (e.currentTarget as HTMLImageElement).src = avatarUrlFor(p.x_avatar_seed); }}
+                alt={`@${p.x_username}`}
+                className="h-9 w-9 rounded-full border border-border/60 bg-background object-cover"
+              />
+              <div className="min-w-0 flex-1">
+                <div className="truncate text-sm font-semibold text-foreground">@{p.x_username}</div>
+                <div className="font-mono text-[10px] text-muted-foreground">
+                  sealed · {new Date(p.created_at).toLocaleString()}
+                </div>
+              </div>
+              <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-accent">
+                ?
+              </span>
+            </li>
+          ))}
+        </ol>
+      )}
     </div>
   );
 }
@@ -226,7 +321,7 @@ function XAvatar({ handle, size = 64 }: { handle: string; size?: number }) {
 }
 
 function ShareCardModal({ data, onClose }: {
-  data: { correct: boolean; xp: number; badge: string | null; ms: number; handle: string; title: string; txHash: string };
+  data: { correct: boolean | null; revealed: boolean; xp: number; badge: string | null; ms: number; handle: string; title: string; txHash: string };
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -253,7 +348,16 @@ function ShareCardModal({ data, onClose }: {
   };
 
   const tweet = () => {
-    const lines = data.correct
+    const lines = !data.revealed
+      ? [
+          `🧩 Just submitted my answer to a Ritual Riddle Quest.`,
+          `Now we wait for Siggy's judgment… 🐈‍⬛`,
+          ``,
+          `👉 ${shareUrl}`,
+          ``,
+          `#BuildOnRitual #RitualRiddles`,
+        ]
+      : data.correct
       ? [
           `🧩 I cracked a Ritual Riddle Quest onchain.`,
           `⚡ Earned +${data.xp} XP on Ritual Chain ${RITUAL_CHAIN.id}`,
@@ -277,7 +381,9 @@ function ShareCardModal({ data, onClose }: {
     window.open(`https://twitter.com/intent/tweet?text=${t}`, "_blank", "noopener,noreferrer");
   };
 
-  const correct = data.correct;
+  // Pre-reveal: always neutral. Post-reveal: brighten on correct, dim on wrong.
+  const correct = data.revealed && data.correct === true;
+  const neutral = !data.revealed;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/85 backdrop-blur-xl p-4 overflow-y-auto" onClick={onClose}>
@@ -353,7 +459,9 @@ function ShareCardModal({ data, onClose }: {
             {/* Title block */}
             <div className="mt-5">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.25em] backdrop-blur-md">
-                {correct ? (
+                {neutral ? (
+                  <><Hourglass className="size-3 text-cyan-300" /> Submission Recorded Onchain</>
+                ) : correct ? (
                   <><Trophy className="size-3 text-amber-300" /> Riddle Cracked</>
                 ) : (
                   <><Eye className="size-3 text-fuchsia-300" /> Riddle Submitted</>
@@ -368,7 +476,11 @@ function ShareCardModal({ data, onClose }: {
                 }}>
                 {data.title}
               </h2>
-              {!correct && (
+              {neutral ? (
+                <p className="mt-2 text-[12px] italic text-white/60">
+                  Your answer has been sealed on Ritual Chain. Siggy is evaluating · revealed when the quest ends.
+                </p>
+              ) : !correct && (
                 <p className="mt-2 text-[12px] italic text-white/60">
                   An attempt has been etched onto Ritual chain. Siggy is watching 👁️
                 </p>
@@ -388,7 +500,13 @@ function ShareCardModal({ data, onClose }: {
 
             {/* Stats */}
             <div className="mt-4">
-              {correct ? (
+              {neutral ? (
+                <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
+                  <div className="relative flex items-center gap-2 text-[11px] text-white/70 font-mono uppercase tracking-[0.2em]">
+                    <Hourglass className="size-3.5 text-cyan-300 animate-pulse" /> Awaiting Siggy's judgment
+                  </div>
+                </div>
+              ) : correct ? (
                 <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
                   <div className="absolute inset-0 opacity-40"
                     style={{ background: "linear-gradient(135deg, rgba(34,211,238,.25), transparent 60%)" }} />
