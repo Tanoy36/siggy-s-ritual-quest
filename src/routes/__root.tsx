@@ -79,11 +79,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { title: "Ritual Riddle Quest · Ritual Ecosystem" },
       { name: "description", content: "A live onchain riddle quest platform for the Ritual ecosystem. Connect your wallet, solve riddles, climb the leaderboard." },
       { name: "author", content: "Ritual Foundation Community" },
-      { property: "og:title", content: "Ritual Riddle Quest" },
-      { property: "og:description", content: "Live onchain riddles. Real wallets. Premium glory." },
+      { property: "og:title", content: "Ritual Riddle Quest · Ritual Ecosystem" },
+      { property: "og:description", content: "A live onchain riddle quest platform for the Ritual ecosystem. Connect your wallet, solve riddles, climb the leaderboard." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "theme-color", content: "#0a0716" },
+      { name: "twitter:title", content: "Ritual Riddle Quest · Ritual Ecosystem" },
+      { name: "twitter:description", content: "A live onchain riddle quest platform for the Ritual ecosystem. Connect your wallet, solve riddles, climb the leaderboard." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8216f306-2f9c-4487-bcb9-d0d970d8162c/id-preview-3137d453--bdb766aa-4091-45d7-a6a5-852ccb16f439.lovable.app-1779011954542.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/8216f306-2f9c-4487-bcb9-d0d970d8162c/id-preview-3137d453--bdb766aa-4091-45d7-a6a5-852ccb16f439.lovable.app-1779011954542.png" },
     ],
     links: [
       {
