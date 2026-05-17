@@ -5,8 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Lock, Loader2, Sparkles, Download, Twitter, ExternalLink, Trophy, Zap, Clock, Eye, Hourglass } from "lucide-react";
 import * as htmlToImage from "html-to-image";
-import { getRiddle, getLeaderboard, submitAnswer, getMySubmission, getRiddleParticipants } from "@/lib/quests.functions";
-import { LeaderboardList } from "@/components/LeaderboardList";
+import { getRiddle, submitAnswer, getMySubmission, getPerformers } from "@/lib/quests.functions";
+import { PerformersList } from "@/components/PerformersList";
 import { Siggy, SiggyMini } from "@/components/Siggy";
 import { useWallet } from "@/components/WalletButton";
 import { sendRitualQuestTx } from "@/lib/wallet";
@@ -21,14 +21,12 @@ export const Route = createFileRoute("/quests/$id")({
 function Page() {
   const { id } = useParams({ from: "/quests/$id" });
   const getR = useServerFn(getRiddle);
-  const getLb = useServerFn(getLeaderboard);
   const getMy = useServerFn(getMySubmission);
   const submit = useServerFn(submitAnswer);
-  const getParts = useServerFn(getRiddleParticipants);
+  const getPerf = useServerFn(getPerformers);
 
   const r = useQuery({ queryKey: ["riddle", id], queryFn: () => getR({ data: { id } }) });
-  const lb = useQuery({ queryKey: ["lb", id], queryFn: () => getLb({ data: { riddleId: id } }) });
-  const parts = useQuery({ queryKey: ["parts", id], queryFn: () => getParts({ data: { riddleId: id } }) });
+  const perf = useQuery({ queryKey: ["perf", id], queryFn: () => getPerf({ data: { riddleId: id } }) });
 
   const { addr, connect } = useWallet();
   const my = useQuery({
@@ -40,11 +38,11 @@ function Page() {
   useEffect(() => {
     const ch = supabase.channel(`r-${id}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "submissions", filter: `riddle_id=eq.${id}` }, () => {
-        lb.refetch(); parts.refetch();
+        perf.refetch();
       })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, [id, lb, parts]);
+  }, [id, perf]);
 
   const startedAt = useMemo(() => Date.now(), [id]);
   const [answer, setAnswer] = useState("");
@@ -66,7 +64,7 @@ function Page() {
       return { ...res, txHash };
     },
     onSuccess: (res) => {
-      lb.refetch(); my.refetch(); parts.refetch();
+      my.refetch(); perf.refetch();
       setShowCard({ correct: res.correct, xp: res.xpEarned, badge: res.badge, ms: res.submission.completion_time_ms, txHash: res.txHash });
       toast.success("Submission sealed onchain", {
         description: "Siggy is evaluating · results revealed when the quest ends.",
@@ -202,82 +200,32 @@ function Page() {
       </div>
 
       <aside>
-        {revealed ? (
-          <>
-            <h3 className="mb-3 font-display text-lg font-bold">Winners Revealed</h3>
-            <LeaderboardList rows={lb.data ?? []} />
-          </>
-        ) : (
-          <ParticipantsPanel
-            rows={parts.data ?? []}
-            endTime={riddle.end_time}
-          />
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="font-display text-lg font-bold">
+            {revealed ? "Winners Revealed" : "Top Performers"}
+          </h3>
+          <span className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+            {revealed
+              ? `${(perf.data ?? []).filter((p) => p.status === "winner").length} winners`
+              : `${(perf.data ?? []).length} sealed`}
+          </span>
+        </div>
+        {!revealed && (
+          <div className="mb-3 glass-strong rounded-2xl p-4 border border-accent/30 glow-purple">
+            <div className="flex items-center gap-2 text-[10px] uppercase tracking-[0.25em] text-accent">
+              <Hourglass className="size-3.5 animate-pulse" /> Awaiting Reveal
+            </div>
+            <div className="mt-1 font-display text-lg font-bold text-holographic">
+              Siggy has not yet judged
+            </div>
+            <div className="mt-2 flex items-center justify-between text-xs font-mono">
+              <span className="text-muted-foreground">Reveal in</span>
+              <span className="text-accent">{countdown(riddle.end_time)}</span>
+            </div>
+          </div>
         )}
+        <PerformersList rows={perf.data ?? []} pendingMode={!revealed} />
       </aside>
-    </div>
-  );
-}
-
-function ParticipantsPanel({
-  rows,
-  endTime,
-}: {
-  rows: { id: string; wallet_address: string; x_username: string; x_avatar_seed: string; created_at: string }[];
-  endTime: string;
-}) {
-  return (
-    <div className="space-y-4">
-      <div className="glass-strong rounded-2xl p-5 border border-accent/30 glow-purple">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-[0.25em] text-accent">
-          <Hourglass className="size-3.5 animate-pulse" /> Awaiting Reveal
-        </div>
-        <div className="mt-2 font-display text-2xl font-bold text-holographic">
-          Siggy has not yet judged
-        </div>
-        <p className="mt-1 text-sm italic text-muted-foreground">
-          The chain remembers everything. Winners are revealed when the quest ends.
-        </p>
-        <div className="mt-3 flex items-center justify-between text-xs font-mono">
-          <span className="text-muted-foreground">Reveal in</span>
-          <span className="text-accent">{countdown(endTime)}</span>
-        </div>
-        <div className="mt-3 flex items-center justify-between text-xs font-mono">
-          <span className="text-muted-foreground">Participants</span>
-          <span className="text-foreground">{rows.length}</span>
-        </div>
-      </div>
-
-      <h3 className="font-display text-sm uppercase tracking-[0.2em] text-muted-foreground">
-        Sealed Submissions
-      </h3>
-      {rows.length === 0 ? (
-        <div className="glass rounded-2xl p-8 text-center text-sm text-muted-foreground">
-          No one has dared yet · be the first to seal an answer.
-        </div>
-      ) : (
-        <ol className="space-y-2">
-          {rows.map((p, i) => (
-            <li key={p.id} className="glass flex items-center gap-3 rounded-xl p-3">
-              <span className="w-6 text-right font-mono text-xs text-muted-foreground">{i + 1}</span>
-              <img
-                src={`https://unavatar.io/x/${p.x_username}`}
-                onError={(e) => { (e.currentTarget as HTMLImageElement).src = avatarUrlFor(p.x_avatar_seed); }}
-                alt={`@${p.x_username}`}
-                className="h-9 w-9 rounded-full border border-border/60 bg-background object-cover"
-              />
-              <div className="min-w-0 flex-1">
-                <div className="truncate text-sm font-semibold text-foreground">@{p.x_username}</div>
-                <div className="font-mono text-[10px] text-muted-foreground">
-                  sealed · {new Date(p.created_at).toLocaleString()}
-                </div>
-              </div>
-              <span className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] uppercase tracking-wider text-accent">
-                ?
-              </span>
-            </li>
-          ))}
-        </ol>
-      )}
     </div>
   );
 }
