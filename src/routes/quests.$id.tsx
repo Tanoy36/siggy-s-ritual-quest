@@ -3,14 +3,14 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Lock, Loader2, Sparkles, Download, Twitter } from "lucide-react";
+import { Lock, Loader2, Sparkles, Download, Twitter, ExternalLink } from "lucide-react";
 import * as htmlToImage from "html-to-image";
 import { getRiddle, getLeaderboard, submitAnswer, getMySubmission } from "@/lib/quests.functions";
 import { LeaderboardList } from "@/components/LeaderboardList";
 import { Siggy, SiggyMini } from "@/components/Siggy";
 import { useWallet } from "@/components/WalletButton";
-import { signRitualMessage } from "@/lib/wallet";
-import { avatarUrlFor } from "@/lib/constants";
+import { sendRitualQuestTx } from "@/lib/wallet";
+import { avatarUrlFor, RITUAL_CHAIN } from "@/lib/constants";
 import { countdown, fmtMs } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -45,22 +45,22 @@ function Page() {
   const startedAt = useMemo(() => Date.now(), [id]);
   const [answer, setAnswer] = useState("");
   const [xUser, setXUser] = useState("");
-  const [showCard, setShowCard] = useState<null | { correct: boolean; xp: number; badge: string | null; ms: number }>(null);
+  const [showCard, setShowCard] = useState<null | { correct: boolean; xp: number; badge: string | null; ms: number; txHash: string }>(null);
 
   const m = useMutation({
     mutationFn: async () => {
       if (!addr) throw new Error("Connect wallet first");
       if (!xUser.trim()) throw new Error("Enter your X username");
-      const sig = await signRitualMessage(addr, id);
+      const txHash = await sendRitualQuestTx(addr, id);
       const res = await submit({ data: {
         riddleId: id, wallet: addr, xUsername: xUser.trim(),
-        answer: answer.trim(), signature: sig, startedAt,
+        answer: answer.trim(), txHash, startedAt,
       } });
-      return res;
+      return { ...res, txHash };
     },
     onSuccess: (res) => {
       lb.refetch(); my.refetch();
-      setShowCard({ correct: res.correct, xp: res.xpEarned, badge: res.badge, ms: res.submission.completion_time_ms });
+      setShowCard({ correct: res.correct, xp: res.xpEarned, badge: res.badge, ms: res.submission.completion_time_ms, txHash: res.txHash });
       if (res.correct) toast.success("Riddle cracked!", { description: `+${res.xpEarned} XP earned` });
       else toast.error("Not quite", { description: "Your answer didn't match. One shot per wallet." });
     },
@@ -160,9 +160,9 @@ function Page() {
               </div>
               <button disabled={m.isPending} type="submit"
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary via-accent to-pink-glow px-5 py-3 text-sm font-semibold text-primary-foreground glow-purple disabled:opacity-60">
-                {m.isPending ? <><Loader2 className="size-4 animate-spin" /> Signing & submitting…</> : <><Sparkles className="size-4" /> Sign & submit</>}
+                {m.isPending ? <><Loader2 className="size-4 animate-spin" /> Confirm in wallet…</> : <><Sparkles className="size-4" /> Send onchain & submit</>}
               </button>
-              <p className="text-center text-[11px] text-muted-foreground">You'll sign a Ritual chain message · no funds spent.</p>
+              <p className="text-center text-[11px] text-muted-foreground">A 0-value tx on Ritual chain {RITUAL_CHAIN.id} · only gas, no funds sent.</p>
             </form>
           )}
         </div>
