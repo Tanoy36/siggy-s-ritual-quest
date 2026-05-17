@@ -51,7 +51,10 @@ function Page() {
     mutationFn: async () => {
       if (!addr) throw new Error("Connect wallet first");
       if (!xUser.trim()) throw new Error("Enter your X username");
-      const txHash = await sendRitualQuestTx(addr, id);
+      const txHash = await sendRitualQuestTx(addr, id, {
+        xUsername: xUser.trim(),
+        answer: answer.trim(),
+      });
       const res = await submit({ data: {
         riddleId: id, wallet: addr, xUsername: xUser.trim(),
         answer: answer.trim(), txHash, startedAt,
