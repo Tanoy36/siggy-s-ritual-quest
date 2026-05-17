@@ -321,7 +321,7 @@ function XAvatar({ handle, size = 64 }: { handle: string; size?: number }) {
 }
 
 function ShareCardModal({ data, onClose }: {
-  data: { correct: boolean; xp: number; badge: string | null; ms: number; handle: string; title: string; txHash: string };
+  data: { correct: boolean | null; revealed: boolean; xp: number; badge: string | null; ms: number; handle: string; title: string; txHash: string };
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -348,7 +348,16 @@ function ShareCardModal({ data, onClose }: {
   };
 
   const tweet = () => {
-    const lines = data.correct
+    const lines = !data.revealed
+      ? [
+          `🧩 Just submitted my answer to a Ritual Riddle Quest.`,
+          `Now we wait for Siggy's judgment… 🐈‍⬛`,
+          ``,
+          `👉 ${shareUrl}`,
+          ``,
+          `#BuildOnRitual #RitualRiddles`,
+        ]
+      : data.correct
       ? [
           `🧩 I cracked a Ritual Riddle Quest onchain.`,
           `⚡ Earned +${data.xp} XP on Ritual Chain ${RITUAL_CHAIN.id}`,
@@ -372,7 +381,9 @@ function ShareCardModal({ data, onClose }: {
     window.open(`https://twitter.com/intent/tweet?text=${t}`, "_blank", "noopener,noreferrer");
   };
 
-  const correct = data.correct;
+  // Pre-reveal: always neutral. Post-reveal: brighten on correct, dim on wrong.
+  const correct = data.revealed && data.correct === true;
+  const neutral = !data.revealed;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/85 backdrop-blur-xl p-4 overflow-y-auto" onClick={onClose}>
@@ -448,7 +459,9 @@ function ShareCardModal({ data, onClose }: {
             {/* Title block */}
             <div className="mt-5">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.25em] backdrop-blur-md">
-                {correct ? (
+                {neutral ? (
+                  <><Hourglass className="size-3 text-cyan-300" /> Submission Recorded Onchain</>
+                ) : correct ? (
                   <><Trophy className="size-3 text-amber-300" /> Riddle Cracked</>
                 ) : (
                   <><Eye className="size-3 text-fuchsia-300" /> Riddle Submitted</>
@@ -463,7 +476,11 @@ function ShareCardModal({ data, onClose }: {
                 }}>
                 {data.title}
               </h2>
-              {!correct && (
+              {neutral ? (
+                <p className="mt-2 text-[12px] italic text-white/60">
+                  Your answer has been sealed on Ritual Chain. Siggy is evaluating · revealed when the quest ends.
+                </p>
+              ) : !correct && (
                 <p className="mt-2 text-[12px] italic text-white/60">
                   An attempt has been etched onto Ritual chain. Siggy is watching 👁️
                 </p>
@@ -483,7 +500,13 @@ function ShareCardModal({ data, onClose }: {
 
             {/* Stats */}
             <div className="mt-4">
-              {correct ? (
+              {neutral ? (
+                <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
+                  <div className="relative flex items-center gap-2 text-[11px] text-white/70 font-mono uppercase tracking-[0.2em]">
+                    <Hourglass className="size-3.5 text-cyan-300 animate-pulse" /> Awaiting Siggy's judgment
+                  </div>
+                </div>
+              ) : correct ? (
                 <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
                   <div className="absolute inset-0 opacity-40"
                     style={{ background: "linear-gradient(135deg, rgba(34,211,238,.25), transparent 60%)" }} />
