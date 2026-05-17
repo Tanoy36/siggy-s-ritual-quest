@@ -7,7 +7,7 @@ import { LeaderboardList } from "@/components/LeaderboardList";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/leaderboard")({
-  head: () => ({ meta: [{ title: "Leaderboard — Siggy's Riddle Quest" }] }),
+  head: () => ({ meta: [{ title: "Leaderboard · Ritual Riddle Quest" }] }),
   component: Page,
 });
 

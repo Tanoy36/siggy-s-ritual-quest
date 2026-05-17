@@ -139,7 +139,7 @@ function Page() {
                 className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary via-accent to-pink-glow px-5 py-3 text-sm font-semibold text-primary-foreground glow-purple disabled:opacity-60">
                 {m.isPending ? <><Loader2 className="size-4 animate-spin" /> Signing & submitting…</> : <><Sparkles className="size-4" /> Sign & submit</>}
               </button>
-              <p className="text-center text-[11px] text-muted-foreground">You'll sign a Ritual chain message — no funds spent.</p>
+              <p className="text-center text-[11px] text-muted-foreground">You'll sign a Ritual chain message · no funds spent.</p>
             </form>
           )}
         </div>
@@ -176,7 +176,7 @@ function ShareCardModal({ data, onClose }: {
     const a = document.createElement("a"); a.href = url; a.download = `siggy-${data.handle}.png`; a.click();
   };
   const tweet = () => {
-    const t = encodeURIComponent(`I just ${data.correct ? "cracked" : "attempted"} "${data.title}" on Siggy's Riddle Quest 🐈‍⬛✨ +${data.xp} XP on Ritual.`);
+    const t = encodeURIComponent(`I just ${data.correct ? "cracked" : "attempted"} "${data.title}" on Ritual Riddle Quest 🐈‍⬛✨ +${data.xp} XP on Ritual.`);
     window.open(`https://twitter.com/intent/tweet?text=${t}`, "_blank");
   };
   return (

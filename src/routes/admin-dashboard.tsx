@@ -251,7 +251,7 @@ function BansTab({ data, creds, ban, unban, onChange }: any) {
       <div className="space-y-2">
         {data.map((b: any) => (
           <div key={b.wallet_address} className="glass rounded-xl px-4 py-3 flex items-center justify-between">
-            <div><div className="font-mono text-sm">{b.wallet_address}</div><div className="text-xs text-muted-foreground">{b.reason || "—"}</div></div>
+            <div><div className="font-mono text-sm">{b.wallet_address}</div><div className="text-xs text-muted-foreground">{b.reason || " · "}</div></div>
             <button onClick={async () => { await unban({ data: { ...creds, wallet: b.wallet_address } }); onChange(); }}
               className="text-xs text-accent hover:text-foreground">Unban</button>
           </div>

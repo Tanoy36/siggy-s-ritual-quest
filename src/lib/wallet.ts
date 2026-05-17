@@ -46,7 +46,7 @@ export async function ensureRitualChain() {
 export async function signRitualMessage(wallet: string, riddleId: string): Promise<string> {
   const eth = getEthereum();
   if (!eth) throw new Error("No wallet");
-  const msg = `🐈‍⬛ SIGGY'S RIDDLE QUEST\nRitual Chain ${RITUAL_CHAIN.id}\nRiddle: ${riddleId}\nWallet: ${wallet}\nTime: ${new Date().toISOString()}`;
+  const msg = `🐈‍⬛ Ritual Riddle Quest\nRitual Chain ${RITUAL_CHAIN.id}\nRiddle: ${riddleId}\nWallet: ${wallet}\nTime: ${new Date().toISOString()}`;
   const hex = "0x" + Array.from(new TextEncoder().encode(msg)).map(b => b.toString(16).padStart(2, "0")).join("");
   return (await eth.request({ method: "personal_sign", params: [hex, wallet] })) as string;
 }
