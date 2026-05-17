@@ -1,10 +1,10 @@
 import { RITUAL_CHAIN } from "./constants";
-import { keccak256, toHex, encodeFunctionData } from "viem";
+import { keccak256, toHex, encodeFunctionData, type Abi } from "viem";
 import contractArtifact from "@/contracts/RitualRiddleQuest.json";
 
 export const CONTRACT_ADDRESS: string =
   (contractArtifact as { address: string }).address || "";
-export const CONTRACT_ABI = (contractArtifact as { abi: unknown[] }).abi;
+export const CONTRACT_ABI = (contractArtifact as { abi: Abi }).abi;
 
 /** Hash an offchain UUID into the bytes32 riddleId used by the contract. */
 export const hashRiddleId = (uuid: string): `0x${string}` =>
@@ -79,7 +79,7 @@ export async function sendRitualQuestTx(
   if (CONTRACT_ADDRESS) {
     txParams.to = CONTRACT_ADDRESS;
     txParams.data = encodeFunctionData({
-      abi: CONTRACT_ABI as never,
+      abi: CONTRACT_ABI,
       functionName: "submit",
       args: [
         hashRiddleId(riddleId),
