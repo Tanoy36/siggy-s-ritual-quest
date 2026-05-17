@@ -120,7 +120,7 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Particles count={32} />
+      <Particles count={14} />
       <div className="grid-bg fixed inset-0 -z-10" />
       <div className="relative z-10 flex min-h-screen flex-col">
         <SiteHeader />
