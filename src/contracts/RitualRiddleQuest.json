@@ -1,55 +1,228 @@
 {
-  "address": "",
+  "address": "0x54da74397d91832b61ef39194f051cc04f27d571",
   "chainId": 1979,
   "abi": [
-    { "type": "constructor", "inputs": [], "stateMutability": "nonpayable" },
-    { "type": "function", "name": "owner", "inputs": [], "outputs": [{ "type": "address" }], "stateMutability": "view" },
-    { "type": "function", "name": "hasSubmitted", "inputs": [{ "type": "bytes32" }, { "type": "address" }], "outputs": [{ "type": "bool" }], "stateMutability": "view" },
-    { "type": "function", "name": "submissionCount", "inputs": [{ "type": "bytes32" }], "outputs": [{ "type": "uint256" }], "stateMutability": "view" },
-    { "type": "function", "name": "xpOf", "inputs": [{ "type": "address" }], "outputs": [{ "type": "uint256" }], "stateMutability": "view" },
     {
-      "type": "function",
-      "name": "submit",
-      "inputs": [
-        { "name": "riddleId", "type": "bytes32" },
-        { "name": "xUsername", "type": "string" },
-        { "name": "answer", "type": "string" }
-      ],
-      "outputs": [],
-      "stateMutability": "nonpayable"
+      "inputs": [],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
     },
     {
-      "type": "function",
-      "name": "awardXp",
+      "anonymous": false,
       "inputs": [
-        { "name": "wallet", "type": "address" },
-        { "name": "riddleId", "type": "bytes32" },
-        { "name": "amount", "type": "uint256" }
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "previousOwner",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
       ],
-      "outputs": [],
-      "stateMutability": "nonpayable"
+      "name": "OwnershipTransferred",
+      "type": "event"
     },
     {
-      "type": "event",
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "wallet",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "riddleId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "xUsername",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "string",
+          "name": "answer",
+          "type": "string"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint64",
+          "name": "timestamp",
+          "type": "uint64"
+        }
+      ],
       "name": "QuestSubmitted",
-      "inputs": [
-        { "name": "wallet", "type": "address", "indexed": true },
-        { "name": "riddleId", "type": "bytes32", "indexed": true },
-        { "name": "xUsername", "type": "string", "indexed": false },
-        { "name": "answer", "type": "string", "indexed": false },
-        { "name": "timestamp", "type": "uint64", "indexed": false }
-      ],
-      "anonymous": false
+      "type": "event"
     },
     {
-      "type": "event",
-      "name": "XpAwarded",
+      "anonymous": false,
       "inputs": [
-        { "name": "wallet", "type": "address", "indexed": true },
-        { "name": "riddleId", "type": "bytes32", "indexed": true },
-        { "name": "amount", "type": "uint256", "indexed": false }
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "wallet",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "riddleId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
       ],
-      "anonymous": false
+      "name": "XpAwarded",
+      "type": "event"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "wallet",
+          "type": "address"
+        },
+        {
+          "internalType": "bytes32",
+          "name": "riddleId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "awardXp",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "hasSubmitted",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "owner",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "",
+          "type": "bytes32"
+        }
+      ],
+      "name": "submissionCount",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "riddleId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "string",
+          "name": "xUsername",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "answer",
+          "type": "string"
+        }
+      ],
+      "name": "submit",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "newOwner",
+          "type": "address"
+        }
+      ],
+      "name": "transferOwnership",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "name": "xpOf",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
     }
-  ]
+  ],
+  "deployedAt": "2026-05-17T08:45:24.537Z",
+  "txHash": "0x1baf17c024b1c68dd14b9bb696d57bb2d15562c4abdcbe84447dda2853079edd"
 }
