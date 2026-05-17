@@ -10,7 +10,7 @@ export type LbRow = {
 export function LeaderboardList({ rows }: { rows: LbRow[] }) {
   if (!rows.length) return (
     <div className="glass rounded-2xl p-10 text-center text-muted-foreground">
-      No champions yet — be the first to crack the riddle.
+      No champions yet · be the first to crack the riddle.
     </div>
   );
   return (

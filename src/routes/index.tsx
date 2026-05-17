@@ -14,7 +14,7 @@ import { shortAddr } from "@/lib/format";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Siggy's Riddle Quest — Live Onchain Riddles on Ritual" },
+      { title: "Ritual Riddle Quest · Live Onchain Riddles on Ritual" },
       { name: "description", content: "Solve live onchain riddles in the Ritual ecosystem. Connect your wallet, climb the leaderboard, mint your share card." },
     ],
   }),

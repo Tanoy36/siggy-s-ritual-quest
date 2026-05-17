@@ -2,13 +2,29 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+export type PublicRiddle = {
+  id: string;
+  title: string;
+  description: string;
+  difficulty: string;
+  clues: string[];
+  image_url: string | null;
+  start_time: string;
+  end_time: string;
+  xp_reward: number;
+  badge_title: string;
+  max_winners: number;
+  active: boolean;
+  created_at: string;
+};
+
 export const listRiddles = createServerFn({ method: "GET" }).handler(async () => {
   const { data, error } = await supabaseAdmin
     .from("riddles_public")
     .select("*")
     .order("created_at", { ascending: false });
   if (error) throw new Error(error.message);
-  return data ?? [];
+  return (data ?? []) as PublicRiddle[];
 });
 
 export const getRiddle = createServerFn({ method: "GET" })
@@ -21,7 +37,7 @@ export const getRiddle = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!r) throw new Error("Riddle not found");
-    return r;
+    return r as PublicRiddle;
   });
 
 export const getLeaderboard = createServerFn({ method: "GET" })

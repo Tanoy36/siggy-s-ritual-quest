@@ -7,7 +7,7 @@ import { LeaderboardList } from "@/components/LeaderboardList";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/leaderboard")({
-  head: () => ({ meta: [{ title: "Leaderboard — Siggy's Riddle Quest" }] }),
+  head: () => ({ meta: [{ title: "Leaderboard · Ritual Riddle Quest" }] }),
   component: Page,
 });
 
@@ -23,7 +23,7 @@ function Page() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-16 md:px-8">
       <h1 className="font-display text-4xl font-bold mb-2 text-holographic">Top Ritualists</h1>
-      <p className="text-muted-foreground mb-8">Global ranking across every Siggy quest.</p>
+      <p className="text-muted-foreground mb-8">Global ranking across every Ritual Riddle Quest.</p>
       <LeaderboardList rows={q.data ?? []} />
     </div>
   );

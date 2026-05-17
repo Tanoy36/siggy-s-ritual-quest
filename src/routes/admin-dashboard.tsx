@@ -191,17 +191,17 @@ function RiddleForm({ editing, setEditing, creds, upsert, upload, onSaved }: any
   );
 }
 
-function Input({ label, v, on, type = "text" }: any) {
+function Input({ label, v, on, type = "text" }: { label: string; v: string; on: (v: string) => void; type?: string }) {
   return <div><label className="block text-xs uppercase tracking-wider text-muted-foreground mb-1">{label}</label>
     <input type={type} value={v} onChange={(e) => on(e.target.value)}
       className="w-full rounded-xl bg-input/60 border border-border px-3 py-2 text-sm" /></div>;
 }
-function Textarea({ label, v, on }: any) {
+function Textarea({ label, v, on }: { label: string; v: string; on: (v: string) => void }) {
   return <div><label className="block text-xs uppercase tracking-wider text-muted-foreground mb-1">{label}</label>
     <textarea value={v} onChange={(e) => on(e.target.value)} rows={3}
       className="w-full rounded-xl bg-input/60 border border-border px-3 py-2 text-sm" /></div>;
 }
-function Select({ label, v, on, options }: any) {
+function Select({ label, v, on, options }: { label: string; v: string; on: (v: string) => void; options: string[] }) {
   return <div><label className="block text-xs uppercase tracking-wider text-muted-foreground mb-1">{label}</label>
     <select value={v} onChange={(e) => on(e.target.value)} className="w-full rounded-xl bg-input/60 border border-border px-3 py-2 text-sm">
       {options.map((o: string) => <option key={o} value={o}>{o}</option>)}
@@ -251,7 +251,7 @@ function BansTab({ data, creds, ban, unban, onChange }: any) {
       <div className="space-y-2">
         {data.map((b: any) => (
           <div key={b.wallet_address} className="glass rounded-xl px-4 py-3 flex items-center justify-between">
-            <div><div className="font-mono text-sm">{b.wallet_address}</div><div className="text-xs text-muted-foreground">{b.reason || "—"}</div></div>
+            <div><div className="font-mono text-sm">{b.wallet_address}</div><div className="text-xs text-muted-foreground">{b.reason || " · "}</div></div>
             <button onClick={async () => { await unban({ data: { ...creds, wallet: b.wallet_address } }); onChange(); }}
               className="text-xs text-accent hover:text-foreground">Unban</button>
           </div>

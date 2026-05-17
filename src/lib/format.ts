@@ -1,7 +1,7 @@
 export const shortAddr = (a?: string | null) =>
   !a ? "" : `${a.slice(0, 6)}…${a.slice(-4)}`;
 export const fmtMs = (ms: number) => {
-  if (!ms) return "—";
+  if (!ms) return " · ";
   const s = Math.floor(ms / 1000);
   const m = Math.floor(s / 60);
   const r = s % 60;

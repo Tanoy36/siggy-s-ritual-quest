@@ -76,10 +76,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Siggy's Riddle Quest — Ritual Ecosystem" },
+      { title: "Ritual Riddle Quest · Ritual Ecosystem" },
       { name: "description", content: "A live onchain riddle quest platform for the Ritual ecosystem. Connect your wallet, solve riddles, climb the leaderboard." },
       { name: "author", content: "Ritual Foundation Community" },
-      { property: "og:title", content: "Siggy's Riddle Quest" },
+      { property: "og:title", content: "Ritual Riddle Quest" },
       { property: "og:description", content: "Live onchain riddles. Real wallets. Premium glory." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
