@@ -189,7 +189,7 @@ function Loading() {
 }
 
 function ShareCardModal({ data, onClose }: {
-  data: { correct: boolean; xp: number; badge: string | null; ms: number; handle: string; title: string };
+  data: { correct: boolean; xp: number; badge: string | null; ms: number; handle: string; title: string; txHash: string };
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -245,6 +245,10 @@ function ShareCardModal({ data, onClose }: {
             <Twitter className="size-4" /> Share on X
           </button>
         </div>
+        <a href={`${RITUAL_CHAIN.explorer}/tx/${data.txHash}`} target="_blank" rel="noreferrer"
+          className="block w-full rounded-xl glass py-2.5 text-xs font-mono text-center text-accent hover:text-foreground inline-flex items-center justify-center gap-2">
+          <ExternalLink className="size-3.5" /> View tx on Ritual explorer
+        </a>
         <button onClick={onClose} className="w-full text-xs text-muted-foreground">close</button>
       </div>
     </div>
