@@ -1,0 +1,55 @@
+{
+  "address": "",
+  "chainId": 1979,
+  "abi": [
+    { "type": "constructor", "inputs": [], "stateMutability": "nonpayable" },
+    { "type": "function", "name": "owner", "inputs": [], "outputs": [{ "type": "address" }], "stateMutability": "view" },
+    { "type": "function", "name": "hasSubmitted", "inputs": [{ "type": "bytes32" }, { "type": "address" }], "outputs": [{ "type": "bool" }], "stateMutability": "view" },
+    { "type": "function", "name": "submissionCount", "inputs": [{ "type": "bytes32" }], "outputs": [{ "type": "uint256" }], "stateMutability": "view" },
+    { "type": "function", "name": "xpOf", "inputs": [{ "type": "address" }], "outputs": [{ "type": "uint256" }], "stateMutability": "view" },
+    {
+      "type": "function",
+      "name": "submit",
+      "inputs": [
+        { "name": "riddleId", "type": "bytes32" },
+        { "name": "xUsername", "type": "string" },
+        { "name": "answer", "type": "string" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "function",
+      "name": "awardXp",
+      "inputs": [
+        { "name": "wallet", "type": "address" },
+        { "name": "riddleId", "type": "bytes32" },
+        { "name": "amount", "type": "uint256" }
+      ],
+      "outputs": [],
+      "stateMutability": "nonpayable"
+    },
+    {
+      "type": "event",
+      "name": "QuestSubmitted",
+      "inputs": [
+        { "name": "wallet", "type": "address", "indexed": true },
+        { "name": "riddleId", "type": "bytes32", "indexed": true },
+        { "name": "xUsername", "type": "string", "indexed": false },
+        { "name": "answer", "type": "string", "indexed": false },
+        { "name": "timestamp", "type": "uint64", "indexed": false }
+      ],
+      "anonymous": false
+    },
+    {
+      "type": "event",
+      "name": "XpAwarded",
+      "inputs": [
+        { "name": "wallet", "type": "address", "indexed": true },
+        { "name": "riddleId", "type": "bytes32", "indexed": true },
+        { "name": "amount", "type": "uint256", "indexed": false }
+      ],
+      "anonymous": false
+    }
+  ]
+}
