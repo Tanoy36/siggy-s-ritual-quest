@@ -1,8 +1,14 @@
 import { useEffect, useRef } from "react";
 
-export function Particles({ count = 40 }: { count?: number }) {
+export function Particles({ count = 14 }: { count?: number }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
+    // Skip heavy particle render on small / low-power screens.
+    if (typeof window !== "undefined") {
+      const reduce = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+      const small = window.innerWidth < 640;
+      if (reduce || small) return;
+    }
     const el = ref.current; if (!el) return;
     el.innerHTML = "";
     for (let i = 0; i < count; i++) {
