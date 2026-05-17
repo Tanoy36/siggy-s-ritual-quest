@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as AdminLoginRouteImport } from './routes/admin-login'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as QuestsRouteImport } from './routes/quests.'
 
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminLoginRoute = AdminLoginRouteImport.update({
+  id: '/admin-login',
+  path: '/admin-login',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -31,30 +37,34 @@ const QuestsRoute = QuestsRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/admin-login': typeof AdminLoginRoute
   '/leaderboard': typeof LeaderboardRoute
   '/quests/': typeof QuestsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/admin-login': typeof AdminLoginRoute
   '/leaderboard': typeof LeaderboardRoute
   '/quests': typeof QuestsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/admin-login': typeof AdminLoginRoute
   '/leaderboard': typeof LeaderboardRoute
   '/quests/': typeof QuestsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/leaderboard' | '/quests/'
+  fullPaths: '/' | '/admin-login' | '/leaderboard' | '/quests/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/leaderboard' | '/quests'
-  id: '__root__' | '/' | '/leaderboard' | '/quests/'
+  to: '/' | '/admin-login' | '/leaderboard' | '/quests'
+  id: '__root__' | '/' | '/admin-login' | '/leaderboard' | '/quests/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AdminLoginRoute: typeof AdminLoginRoute
   LeaderboardRoute: typeof LeaderboardRoute
   QuestsRoute: typeof QuestsRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/leaderboard'
       fullPath: '/leaderboard'
       preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin-login': {
+      id: '/admin-login'
+      path: '/admin-login'
+      fullPath: '/admin-login'
+      preLoaderRoute: typeof AdminLoginRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AdminLoginRoute: AdminLoginRoute,
   LeaderboardRoute: LeaderboardRoute,
   QuestsRoute: QuestsRoute,
 }
