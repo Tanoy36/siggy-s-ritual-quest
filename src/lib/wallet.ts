@@ -51,6 +51,48 @@ export async function signRitualMessage(wallet: string, riddleId: string): Promi
   return (await eth.request({ method: "personal_sign", params: [hex, wallet] })) as string;
 }
 
+// Send a real on-chain quest interaction: 0-value self-transaction on Ritual chain.
+// This proves wallet ownership and produces a real tx hash + explorer link.
+export async function sendRitualQuestTx(wallet: string, riddleId: string): Promise<string> {
+  const eth = getEthereum();
+  if (!eth) throw new Error("No wallet detected");
+  await ensureRitualChain();
+
+  // Encode a short memo as calldata (hex of "RRQ:<riddleId>").
+  const memo = `RRQ:${riddleId}`;
+  const data =
+    "0x" +
+    Array.from(new TextEncoder().encode(memo))
+      .map(b => b.toString(16).padStart(2, "0"))
+      .join("");
+
+  const txParams: Record<string, string> = {
+    from: wallet,
+    to: wallet, // self-tx, no funds leave the wallet
+    value: "0x0",
+    data,
+  };
+
+  // Best-effort gas estimation. Fall back to a safe default if RPC rejects.
+  try {
+    const gas = (await eth.request({
+      method: "eth_estimateGas",
+      params: [txParams],
+    })) as string;
+    if (gas) txParams.gas = gas;
+  } catch {
+    txParams.gas = "0x186A0"; // 100k
+  }
+
+  const hash = (await eth.request({
+    method: "eth_sendTransaction",
+    params: [txParams],
+  })) as string;
+
+  if (!hash || !hash.startsWith("0x")) throw new Error("Transaction not broadcast");
+  return hash;
+}
+
 export function getStoredWallet(): string | null {
   if (typeof window === "undefined") return null;
   return localStorage.getItem("siggy-wallet");
