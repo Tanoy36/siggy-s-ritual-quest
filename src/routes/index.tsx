@@ -5,11 +5,10 @@ import { useEffect } from "react";
 import { ArrowRight, Megaphone, Radio, Sparkles, Zap } from "lucide-react";
 import { Siggy } from "@/components/Siggy";
 import { RiddleCard } from "@/components/RiddleCard";
-import { LeaderboardList } from "@/components/LeaderboardList";
-import { listRiddles, getLeaderboard, getRecentActivity, getAnnouncements } from "@/lib/quests.functions";
+import { PerformersList } from "@/components/PerformersList";
+import { listRiddles, getPerformers, getRecentActivity, getAnnouncements } from "@/lib/quests.functions";
 import { supabase } from "@/integrations/supabase/client";
 import { avatarUrlFor, RITUAL_CHAIN } from "@/lib/constants";
-import { shortAddr } from "@/lib/format";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -23,12 +22,12 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const list = useServerFn(listRiddles);
-  const lb = useServerFn(getLeaderboard);
+  const lb = useServerFn(getPerformers);
   const feed = useServerFn(getRecentActivity);
   const ann = useServerFn(getAnnouncements);
 
   const riddlesQ = useQuery({ queryKey: ["riddles"], queryFn: () => list() });
-  const lbQ = useQuery({ queryKey: ["leaderboard", "global"], queryFn: () => lb({ data: {} }) });
+  const lbQ = useQuery({ queryKey: ["performers", "global"], queryFn: () => lb({ data: {} }) });
   const feedQ = useQuery({ queryKey: ["feed"], queryFn: () => feed() });
   const annQ = useQuery({ queryKey: ["announcements"], queryFn: () => ann() });
 
@@ -125,8 +124,8 @@ function Home() {
       {/* LB + FEED */}
       <section className="grid grid-cols-1 gap-8 lg:grid-cols-[1.4fr_1fr]">
         <div>
-          <SectionHeader title="Top Ritualists" link={{ to: "/leaderboard", label: "Full leaderboard" }} />
-          <LeaderboardList rows={(lbQ.data ?? []).slice(0, 8)} />
+          <SectionHeader title="Top Performers" link={{ to: "/leaderboard", label: "Full leaderboard" }} />
+          <PerformersList rows={(lbQ.data ?? []).slice(0, 8)} />
         </div>
         <div>
           <SectionHeader title="Live Activity" />
@@ -136,17 +135,18 @@ function Home() {
             )}
             {(feedQ.data ?? []).map(f => (
               <div key={f.id} className="flex items-center gap-3 rounded-xl bg-secondary/40 p-2">
-                <img src={avatarUrlFor(f.x_avatar_seed)} className="h-8 w-8 rounded-full border border-border" alt="" />
+                <img src={`https://unavatar.io/x/${f.x_username}`}
+                  onError={(e) => { (e.currentTarget as HTMLImageElement).src = avatarUrlFor(f.x_avatar_seed); }}
+                  className="h-8 w-8 rounded-full border border-border" alt="" />
                 <div className="min-w-0 flex-1">
                   <div className="truncate text-sm">
                     <span className="font-semibold">@{f.x_username}</span>{" "}
-                    <span className={f.is_correct ? "text-ritual-green" : "text-muted-foreground"}>
-                      {f.is_correct ? "cracked a riddle" : "took a shot"}
-                    </span>
+                    <span className="text-muted-foreground">sealed an answer</span>
                   </div>
-                  <div className="font-mono text-[10px] text-muted-foreground">{shortAddr(f.wallet_address)}</div>
+                  <div className="font-mono text-[10px] text-muted-foreground">
+                    {new Date(f.created_at).toLocaleTimeString()}
+                  </div>
                 </div>
-                {f.is_correct && <span className="text-xs font-mono text-pink-glow">+{f.xp_earned}xp</span>}
               </div>
             ))}
           </div>

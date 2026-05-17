@@ -211,3 +211,8 @@
 ::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: oklch(0.08 0.02 285); }
 ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--primary), var(--accent)); border-radius: 10px; }
+
+@keyframes shine {
+  0% { background-position: -150% 0; }
+  100% { background-position: 250% 0; }
+}
