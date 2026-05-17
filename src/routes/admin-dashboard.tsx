@@ -18,8 +18,6 @@ function Page() {
   const nav = useNavigate();
   const [creds, setCreds] = useState(loadAdmin());
   useEffect(() => { if (!creds) nav({ to: "/admin-login" }); }, [creds, nav]);
-  if (!creds) return null;
-
   const listAll = useServerFn(adminListAll);
   const upsert = useServerFn(adminUpsertRiddle);
   const del = useServerFn(adminDeleteRiddle);
@@ -31,30 +29,36 @@ function Page() {
   const delSub = useServerFn(adminDeleteSubmission);
   const upload = useServerFn(adminUploadImage);
 
-  const q = useQuery({ queryKey: ["admin-all"], queryFn: () => listAll({ data: creds }) });
+  const q = useQuery({
+    queryKey: ["admin-all"],
+    queryFn: () => listAll({ data: creds! }),
+    enabled: !!creds,
+  });
 
   const refresh = () => q.refetch();
   const [tab, setTab] = useState<"riddles" | "submissions" | "bans" | "announcements">("riddles");
 
   const logout = () => { clearAdmin(); setCreds(null); };
 
+  if (!creds) return null;
+
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 md:px-8">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
+    <div className="mx-auto max-w-7xl px-4 py-6 md:py-10 md:px-8">
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3 md:mb-8">
+        <div className="min-w-0">
           <div className="text-xs uppercase tracking-[0.25em] text-muted-foreground">Mods & Radiant Ritualists Console</div>
-          <h1 className="font-display text-3xl font-bold text-holographic">Admin Dashboard</h1>
+          <h1 className="font-display text-2xl md:text-3xl font-bold text-holographic">Admin Dashboard</h1>
           <p className="mt-1 text-xs text-muted-foreground">Mods & Radiant Ritualists can create quests.</p>
         </div>
-        <button onClick={logout} className="inline-flex items-center gap-2 rounded-xl glass px-4 py-2 text-sm hover:text-destructive">
+        <button onClick={logout} className="inline-flex items-center gap-2 rounded-xl glass px-4 py-2 text-sm hover:text-destructive active:scale-95 transition-transform">
           <LogOut className="size-4" /> Logout
         </button>
       </div>
 
-      <div className="mb-6 flex flex-wrap gap-2">
+      <div className="mb-6 -mx-4 px-4 flex gap-2 overflow-x-auto pb-2 md:mx-0 md:px-0 md:flex-wrap md:overflow-visible">
         {(["riddles", "submissions", "bans", "announcements"] as const).map(t => (
           <button key={t} onClick={() => setTab(t)}
-            className={`rounded-xl px-4 py-2 text-sm transition-smooth ${tab === t ? "bg-gradient-to-r from-primary to-accent text-primary-foreground glow-purple" : "glass hover:bg-secondary/60"}`}>
+            className={`shrink-0 rounded-xl px-4 py-2 text-sm capitalize active:scale-95 transition-transform ${tab === t ? "bg-gradient-to-r from-primary to-accent text-primary-foreground" : "glass hover:bg-secondary/60"}`}>
             {t}
           </button>
         ))}
