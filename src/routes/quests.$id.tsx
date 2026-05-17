@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Lock, Loader2, Sparkles, Download, Twitter, ExternalLink, Trophy, Zap, Clock } from "lucide-react";
+import { Lock, Loader2, Sparkles, Download, Twitter, ExternalLink, Trophy, Zap, Clock, Eye } from "lucide-react";
 import * as htmlToImage from "html-to-image";
 import { getRiddle, getLeaderboard, submitAnswer, getMySubmission } from "@/lib/quests.functions";
 import { LeaderboardList } from "@/components/LeaderboardList";
@@ -253,21 +253,31 @@ function ShareCardModal({ data, onClose }: {
   };
 
   const tweet = () => {
-    const lines = [
-      `🧩 Just ${data.correct ? "cracked" : "attempted"} a Ritual Riddle Quest`,
-      `⚡ Earned +${data.xp} XP`,
-      `🐈‍⬛ Guided by Siggy`,
-      ``,
-      `"${data.title}"`,
-      ``,
-      `Think you can solve it too?`,
-      `👉 ${shareUrl}`,
-      ``,
-      `#BuildOnRitual #RitualRiddles`,
-    ];
+    const lines = data.correct
+      ? [
+          `🧩 I cracked a Ritual Riddle Quest onchain.`,
+          `⚡ Earned +${data.xp} XP on Ritual Chain ${RITUAL_CHAIN.id}`,
+          `🐈‍⬛ Guided by Siggy`,
+          ``,
+          `Think you can solve it too?`,
+          `👉 ${shareUrl}`,
+          ``,
+          `#BuildOnRitual #RitualRiddles`,
+        ]
+      : [
+          `🧩 Just submitted a Ritual Riddle Quest onchain.`,
+          `Siggy is probably laughing at my answer 🐈‍⬛`,
+          ``,
+          `Can you solve it?`,
+          `👉 ${shareUrl}`,
+          ``,
+          `#BuildOnRitual`,
+        ];
     const t = encodeURIComponent(lines.join("\n"));
     window.open(`https://twitter.com/intent/tweet?text=${t}`, "_blank", "noopener,noreferrer");
   };
+
+  const correct = data.correct;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/85 backdrop-blur-xl p-4 overflow-y-auto" onClick={onClose}>
@@ -278,10 +288,12 @@ function ShareCardModal({ data, onClose }: {
           className="relative overflow-hidden rounded-[28px]"
           style={{
             aspectRatio: "4 / 5",
-            background:
-              "radial-gradient(120% 80% at 0% 0%, #2a1860 0%, transparent 55%), radial-gradient(120% 80% at 100% 100%, #0a3a4a 0%, transparent 55%), linear-gradient(160deg, #07071a 0%, #0a0420 60%, #06060f 100%)",
-            boxShadow:
-              "0 0 0 1px rgba(255,255,255,0.08), 0 30px 80px -20px rgba(139,92,246,0.55), 0 10px 40px -10px rgba(34,211,238,0.35)",
+            background: correct
+              ? "radial-gradient(120% 80% at 0% 0%, #2a1860 0%, transparent 55%), radial-gradient(120% 80% at 100% 100%, #0a3a4a 0%, transparent 55%), linear-gradient(160deg, #07071a 0%, #0a0420 60%, #06060f 100%)"
+              : "radial-gradient(120% 80% at 0% 0%, #2a0a2a 0%, transparent 55%), radial-gradient(120% 80% at 100% 100%, #18001f 0%, transparent 55%), linear-gradient(160deg, #050008 0%, #0a0210 60%, #03000a 100%)",
+            boxShadow: correct
+              ? "0 0 0 1px rgba(255,255,255,0.08), 0 30px 80px -20px rgba(139,92,246,0.55), 0 10px 40px -10px rgba(34,211,238,0.35)"
+              : "0 0 0 1px rgba(255,255,255,0.05), 0 30px 80px -20px rgba(139,30,80,0.45), 0 10px 40px -10px rgba(80,20,120,0.35)",
           }}
         >
           {/* Holographic border */}
@@ -289,19 +301,32 @@ function ShareCardModal({ data, onClose }: {
             className="pointer-events-none absolute inset-0 rounded-[28px]"
             style={{
               padding: 1,
-              background: "conic-gradient(from 130deg, #a78bfa55, #22d3ee55, #ec489955, #a78bfa55)",
+              background: correct
+                ? "conic-gradient(from 130deg, #a78bfa55, #22d3ee55, #ec489955, #a78bfa55)"
+                : "conic-gradient(from 130deg, #7c2d6f44, #4c1d9544, #1f1b3a44, #7c2d6f44)",
               WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
               WebkitMaskComposite: "xor",
               maskComposite: "exclude",
             }}
           />
           {/* Floating glows */}
-          <div className="absolute -top-16 -right-16 size-64 rounded-full blur-3xl opacity-60"
-            style={{ background: "radial-gradient(circle, #22d3ee, transparent 65%)" }} />
-          <div className="absolute -bottom-20 -left-20 size-72 rounded-full blur-3xl opacity-50"
-            style={{ background: "radial-gradient(circle, #a78bfa, transparent 65%)" }} />
-          <div className="absolute top-1/3 left-1/2 size-40 rounded-full blur-3xl opacity-30"
-            style={{ background: "radial-gradient(circle, #ec4899, transparent 65%)" }} />
+          {correct ? (
+            <>
+              <div className="absolute -top-16 -right-16 size-64 rounded-full blur-3xl opacity-60"
+                style={{ background: "radial-gradient(circle, #22d3ee, transparent 65%)" }} />
+              <div className="absolute -bottom-20 -left-20 size-72 rounded-full blur-3xl opacity-50"
+                style={{ background: "radial-gradient(circle, #a78bfa, transparent 65%)" }} />
+              <div className="absolute top-1/3 left-1/2 size-40 rounded-full blur-3xl opacity-30"
+                style={{ background: "radial-gradient(circle, #ec4899, transparent 65%)" }} />
+            </>
+          ) : (
+            <>
+              <div className="absolute -top-16 -right-16 size-64 rounded-full blur-3xl opacity-40"
+                style={{ background: "radial-gradient(circle, #7c2d6f, transparent 65%)" }} />
+              <div className="absolute -bottom-20 -left-20 size-72 rounded-full blur-3xl opacity-35"
+                style={{ background: "radial-gradient(circle, #4c1d95, transparent 65%)" }} />
+            </>
+          )}
           {/* Noise */}
           <div className="absolute inset-0 opacity-[0.07] mix-blend-overlay pointer-events-none"
             style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.55'/></svg>\")" }} />
@@ -328,13 +353,26 @@ function ShareCardModal({ data, onClose }: {
             {/* Title block */}
             <div className="mt-5">
               <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.25em] backdrop-blur-md">
-                <Trophy className="size-3 text-amber-300" />
-                {data.correct ? "Riddle Cracked" : "Quest Attempted"}
+                {correct ? (
+                  <><Trophy className="size-3 text-amber-300" /> Riddle Cracked</>
+                ) : (
+                  <><Eye className="size-3 text-fuchsia-300" /> Riddle Submitted</>
+                )}
               </div>
               <h2 className="mt-3 font-display text-[28px] leading-[1.05] font-extrabold"
-                style={{ backgroundImage: "linear-gradient(135deg, #ffffff 0%, #a5f3fc 50%, #f9a8d4 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+                style={{
+                  backgroundImage: correct
+                    ? "linear-gradient(135deg, #ffffff 0%, #a5f3fc 50%, #f9a8d4 100%)"
+                    : "linear-gradient(135deg, #e9d5ff 0%, #c4b5fd 50%, #f0abfc 100%)",
+                  WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent",
+                }}>
                 {data.title}
               </h2>
+              {!correct && (
+                <p className="mt-2 text-[12px] italic text-white/60">
+                  An attempt has been etched onto Ritual chain. Siggy is watching 👁️
+                </p>
+              )}
             </div>
 
             {/* User row */}
@@ -349,26 +387,26 @@ function ShareCardModal({ data, onClose }: {
             </div>
 
             {/* Stats */}
-            <div className="mt-4 grid grid-cols-2 gap-3">
-              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
-                <div className="absolute inset-0 opacity-40"
-                  style={{ background: "linear-gradient(135deg, rgba(34,211,238,.25), transparent 60%)" }} />
-                <div className="relative">
-                  <div className="flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-white/60">
-                    <Zap className="size-3 text-cyan-300" /> XP
+            <div className="mt-4">
+              {correct ? (
+                <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
+                  <div className="absolute inset-0 opacity-40"
+                    style={{ background: "linear-gradient(135deg, rgba(34,211,238,.25), transparent 60%)" }} />
+                  <div className="relative flex items-center justify-between">
+                    <div className="flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-white/60">
+                      <Zap className="size-3 text-cyan-300" /> XP Earned
+                    </div>
+                    <div className="text-3xl font-bold font-mono"
+                      style={{ textShadow: "0 0 24px rgba(34,211,238,.55)" }}>+{data.xp}</div>
                   </div>
-                  <div className="mt-1 text-3xl font-bold font-mono"
-                    style={{ textShadow: "0 0 24px rgba(34,211,238,.55)" }}>+{data.xp}</div>
                 </div>
-              </div>
-              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
-                <div className="absolute inset-0 opacity-40"
-                  style={{ background: "linear-gradient(135deg, rgba(236,72,153,.25), transparent 60%)" }} />
-                <div className="relative">
-                  <div className="text-[10px] uppercase tracking-[0.2em] text-white/60">Title</div>
-                  <div className="mt-1 text-base font-bold leading-tight">{data.badge ?? "Ritualist"}</div>
+              ) : (
+                <div className="relative overflow-hidden rounded-2xl border border-fuchsia-500/20 bg-fuchsia-500/5 p-4 backdrop-blur-md">
+                  <div className="relative flex items-center gap-2 text-[11px] text-white/70 font-mono uppercase tracking-[0.2em]">
+                    <Eye className="size-3.5 text-fuchsia-300" /> Attempt recorded onchain
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Footer */}
