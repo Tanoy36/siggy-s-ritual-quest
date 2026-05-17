@@ -14,7 +14,7 @@ import { avatarUrlFor } from "@/lib/constants";
 import { countdown, fmtMs } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 
-export const Route = createFileRoute("/quests/")({
+export const Route = createFileRoute("/quests/$id")({
   component: Page,
 });
 
