@@ -155,11 +155,65 @@ export type Database = {
             referencedRelation: "riddles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "submissions_riddle_id_fkey"
+            columns: ["riddle_id"]
+            isOneToOne: false
+            referencedRelation: "riddles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
     }
     Views: {
-      [_ in never]: never
+      riddles_public: {
+        Row: {
+          active: boolean | null
+          badge_title: string | null
+          clues: string[] | null
+          created_at: string | null
+          description: string | null
+          difficulty: string | null
+          end_time: string | null
+          id: string | null
+          image_url: string | null
+          max_winners: number | null
+          start_time: string | null
+          title: string | null
+          xp_reward: number | null
+        }
+        Insert: {
+          active?: boolean | null
+          badge_title?: string | null
+          clues?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          end_time?: string | null
+          id?: string | null
+          image_url?: string | null
+          max_winners?: number | null
+          start_time?: string | null
+          title?: string | null
+          xp_reward?: number | null
+        }
+        Update: {
+          active?: boolean | null
+          badge_title?: string | null
+          clues?: string[] | null
+          created_at?: string | null
+          description?: string | null
+          difficulty?: string | null
+          end_time?: string | null
+          id?: string | null
+          image_url?: string | null
+          max_winners?: number | null
+          start_time?: string | null
+          title?: string | null
+          xp_reward?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       [_ in never]: never
