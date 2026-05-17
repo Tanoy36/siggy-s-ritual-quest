@@ -3,7 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
-import { Lock, Loader2, Sparkles, Download, Twitter, ExternalLink } from "lucide-react";
+import { Lock, Loader2, Sparkles, Download, Twitter, ExternalLink, Trophy, Zap, Clock } from "lucide-react";
 import * as htmlToImage from "html-to-image";
 import { getRiddle, getLeaderboard, submitAnswer, getMySubmission } from "@/lib/quests.functions";
 import { LeaderboardList } from "@/components/LeaderboardList";
@@ -191,68 +191,219 @@ function Loading() {
   return <div className="p-24 text-center"><Loader2 className="mx-auto size-8 animate-spin text-accent" /></div>;
 }
 
+function XAvatar({ handle, size = 64 }: { handle: string; size?: number }) {
+  const clean = handle.replace(/^@/, "");
+  const [src, setSrc] = useState(`https://unavatar.io/x/${clean}?fallback=false`);
+  const [loaded, setLoaded] = useState(false);
+  return (
+    <div
+      className="relative shrink-0 rounded-full p-[2px]"
+      style={{
+        width: size,
+        height: size,
+        background: "conic-gradient(from 180deg, #a78bfa, #22d3ee, #ec4899, #a78bfa)",
+        boxShadow: "0 0 24px -4px rgba(167,139,250,.7)",
+      }}
+    >
+      <div className="relative h-full w-full overflow-hidden rounded-full bg-[#0b0b1a]">
+        {!loaded && (
+          <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-white/10 to-white/0" />
+        )}
+        <img
+          src={src}
+          alt={`@${clean}`}
+          crossOrigin="anonymous"
+          referrerPolicy="no-referrer"
+          loading="eager"
+          decoding="async"
+          onLoad={() => setLoaded(true)}
+          onError={() => setSrc(avatarUrlFor(clean))}
+          className="h-full w-full object-cover"
+        />
+      </div>
+    </div>
+  );
+}
+
 function ShareCardModal({ data, onClose }: {
   data: { correct: boolean; xp: number; badge: string | null; ms: number; handle: string; title: string; txHash: string };
   onClose: () => void;
 }) {
   const ref = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+  const shareUrl = typeof window !== "undefined" ? window.location.href : "https://ritualriddlequest.app";
+
   const dl = async () => {
     if (!ref.current) return;
-    const url = await htmlToImage.toPng(ref.current, { pixelRatio: 2, cacheBust: true });
-    const a = document.createElement("a"); a.href = url; a.download = `siggy-${data.handle}.png`; a.click();
+    setDownloading(true);
+    try {
+      const url = await htmlToImage.toPng(ref.current, {
+        pixelRatio: 4,
+        cacheBust: true,
+        backgroundColor: "#06060f",
+        skipFonts: false,
+      });
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ritual-riddle-${data.handle}.png`;
+      a.click();
+    } finally {
+      setDownloading(false);
+    }
   };
+
   const tweet = () => {
-    const t = encodeURIComponent(`I just ${data.correct ? "cracked" : "attempted"} "${data.title}" on Ritual Riddle Quest 🐈‍⬛✨ +${data.xp} XP on Ritual.`);
-    window.open(`https://twitter.com/intent/tweet?text=${t}`, "_blank");
+    const lines = [
+      `🧩 Just ${data.correct ? "cracked" : "attempted"} a Ritual Riddle Quest`,
+      `⚡ Earned +${data.xp} XP`,
+      `🐈‍⬛ Guided by Siggy`,
+      ``,
+      `"${data.title}"`,
+      ``,
+      `Think you can solve it too?`,
+      `👉 ${shareUrl}`,
+      ``,
+      `#BuildOnRitual #RitualRiddles`,
+    ];
+    const t = encodeURIComponent(lines.join("\n"));
+    window.open(`https://twitter.com/intent/tweet?text=${t}`, "_blank", "noopener,noreferrer");
   };
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-md p-4" onClick={onClose}>
-      <div className="max-w-md w-full space-y-4" onClick={(e) => e.stopPropagation()}>
-        <div ref={ref} className="relative overflow-hidden rounded-3xl p-8"
-          style={{ background: "linear-gradient(135deg, oklch(0.15 0.08 290), oklch(0.10 0.05 250))",
-                   boxShadow: "0 0 80px -10px oklch(0.65 0.28 305 / 0.6)" }}>
-          <div className="absolute -top-10 -right-10 size-48 rounded-full blur-3xl"
-            style={{ background: "var(--cyan-glow)", opacity: 0.3 }} />
-          <div className="relative">
-            <div className="flex items-center justify-between">
-              <div className="text-[10px] uppercase tracking-[0.3em] text-white/60">Ritual Ecosystem</div>
-              <Siggy size={56} float={false} glow={false} />
-            </div>
-            <div className="mt-6 text-3xl font-display font-bold text-white">{data.correct ? "Riddle Cracked" : "Quest Attempted"}</div>
-            <div className="mt-1 text-sm text-white/70">{data.title}</div>
-            <div className="mt-6 flex items-center gap-3">
-              <img src={avatarUrlFor(data.handle)} className="size-14 rounded-full border-2 border-white/30" alt="" />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/85 backdrop-blur-xl p-4 overflow-y-auto" onClick={onClose}>
+      <div className="max-w-md w-full space-y-4 my-4" onClick={(e) => e.stopPropagation()}>
+        {/* The card */}
+        <div
+          ref={ref}
+          className="relative overflow-hidden rounded-[28px]"
+          style={{
+            aspectRatio: "4 / 5",
+            background:
+              "radial-gradient(120% 80% at 0% 0%, #2a1860 0%, transparent 55%), radial-gradient(120% 80% at 100% 100%, #0a3a4a 0%, transparent 55%), linear-gradient(160deg, #07071a 0%, #0a0420 60%, #06060f 100%)",
+            boxShadow:
+              "0 0 0 1px rgba(255,255,255,0.08), 0 30px 80px -20px rgba(139,92,246,0.55), 0 10px 40px -10px rgba(34,211,238,0.35)",
+          }}
+        >
+          {/* Holographic border */}
+          <div
+            className="pointer-events-none absolute inset-0 rounded-[28px]"
+            style={{
+              padding: 1,
+              background: "conic-gradient(from 130deg, #a78bfa55, #22d3ee55, #ec489955, #a78bfa55)",
+              WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
+              WebkitMaskComposite: "xor",
+              maskComposite: "exclude",
+            }}
+          />
+          {/* Floating glows */}
+          <div className="absolute -top-16 -right-16 size-64 rounded-full blur-3xl opacity-60"
+            style={{ background: "radial-gradient(circle, #22d3ee, transparent 65%)" }} />
+          <div className="absolute -bottom-20 -left-20 size-72 rounded-full blur-3xl opacity-50"
+            style={{ background: "radial-gradient(circle, #a78bfa, transparent 65%)" }} />
+          <div className="absolute top-1/3 left-1/2 size-40 rounded-full blur-3xl opacity-30"
+            style={{ background: "radial-gradient(circle, #ec4899, transparent 65%)" }} />
+          {/* Noise */}
+          <div className="absolute inset-0 opacity-[0.07] mix-blend-overlay pointer-events-none"
+            style={{ backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.55'/></svg>\")" }} />
+          {/* Grid */}
+          <div className="absolute inset-0 opacity-20 pointer-events-none"
+            style={{ backgroundImage: "linear-gradient(rgba(255,255,255,.06) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.06) 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
+
+          <div className="relative h-full w-full flex flex-col p-7 text-white">
+            {/* Header */}
+            <div className="flex items-start justify-between">
               <div>
-                <div className="text-lg font-semibold text-white">@{data.handle}</div>
-                <div className="text-xs text-white/60 font-mono">{fmtMs(data.ms)}</div>
+                <div className="text-[10px] uppercase tracking-[0.35em] text-white/50">Ritual Ecosystem</div>
+                <div className="mt-1 text-[11px] font-mono text-cyan-300/90">chain {RITUAL_CHAIN.id} · onchain proof</div>
+              </div>
+              <div className="relative">
+                <div className="absolute inset-0 -m-3 rounded-full blur-2xl opacity-70"
+                  style={{ background: "radial-gradient(circle, #fde68a, transparent 60%)" }} />
+                <div className="relative animate-float">
+                  <Siggy size={72} float={false} glow={false} />
+                </div>
               </div>
             </div>
-            <div className="mt-6 grid grid-cols-2 gap-3">
-              <div className="rounded-xl bg-white/10 p-3">
-                <div className="text-[10px] uppercase text-white/60">XP</div>
-                <div className="text-2xl font-bold text-white font-mono">+{data.xp}</div>
+
+            {/* Title block */}
+            <div className="mt-5">
+              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.25em] backdrop-blur-md">
+                <Trophy className="size-3 text-amber-300" />
+                {data.correct ? "Riddle Cracked" : "Quest Attempted"}
               </div>
-              <div className="rounded-xl bg-white/10 p-3">
-                <div className="text-[10px] uppercase text-white/60">Title</div>
-                <div className="text-sm font-bold text-white">{data.badge}</div>
+              <h2 className="mt-3 font-display text-[28px] leading-[1.05] font-extrabold"
+                style={{ backgroundImage: "linear-gradient(135deg, #ffffff 0%, #a5f3fc 50%, #f9a8d4 100%)", WebkitBackgroundClip: "text", backgroundClip: "text", color: "transparent" }}>
+                {data.title}
+              </h2>
+            </div>
+
+            {/* User row */}
+            <div className="mt-5 flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-3 backdrop-blur-md">
+              <XAvatar handle={data.handle} size={56} />
+              <div className="min-w-0">
+                <div className="text-base font-semibold truncate">@{data.handle}</div>
+                <div className="flex items-center gap-1 text-[11px] text-white/60 font-mono">
+                  <Clock className="size-3" /> {fmtMs(data.ms)}
+                </div>
               </div>
             </div>
-            <div className="mt-6 text-[10px] uppercase tracking-[0.3em] text-white/40">siggy's riddle quest</div>
+
+            {/* Stats */}
+            <div className="mt-4 grid grid-cols-2 gap-3">
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
+                <div className="absolute inset-0 opacity-40"
+                  style={{ background: "linear-gradient(135deg, rgba(34,211,238,.25), transparent 60%)" }} />
+                <div className="relative">
+                  <div className="flex items-center gap-1 text-[10px] uppercase tracking-[0.2em] text-white/60">
+                    <Zap className="size-3 text-cyan-300" /> XP
+                  </div>
+                  <div className="mt-1 text-3xl font-bold font-mono"
+                    style={{ textShadow: "0 0 24px rgba(34,211,238,.55)" }}>+{data.xp}</div>
+                </div>
+              </div>
+              <div className="relative overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur-md">
+                <div className="absolute inset-0 opacity-40"
+                  style={{ background: "linear-gradient(135deg, rgba(236,72,153,.25), transparent 60%)" }} />
+                <div className="relative">
+                  <div className="text-[10px] uppercase tracking-[0.2em] text-white/60">Title</div>
+                  <div className="mt-1 text-base font-bold leading-tight">{data.badge ?? "Ritualist"}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="mt-auto pt-6 flex items-end justify-between">
+              <div>
+                <div className="text-[10px] uppercase tracking-[0.35em] text-white/50">Ritual Riddle Quest</div>
+                <div className="mt-1 text-[10px] font-mono text-white/40 truncate max-w-[180px]">
+                  tx {data.txHash.slice(0, 10)}…{data.txHash.slice(-6)}
+                </div>
+              </div>
+              <div className="text-right">
+                <div className="text-[10px] uppercase tracking-[0.3em] text-white/40">Guided by</div>
+                <div className="text-sm font-display font-bold bg-gradient-to-r from-amber-200 to-pink-300 bg-clip-text text-transparent">Siggy 🐈‍⬛</div>
+              </div>
+            </div>
           </div>
         </div>
+
+        {/* Actions */}
         <div className="flex gap-2">
-          <button onClick={dl} className="flex-1 rounded-xl glass-strong py-3 text-sm font-semibold inline-flex items-center justify-center gap-2 glow-cyan">
-            <Download className="size-4" /> Download PNG
+          <button onClick={dl} disabled={downloading}
+            className="flex-1 rounded-xl glass-strong py-3 text-sm font-semibold inline-flex items-center justify-center gap-2 glow-cyan disabled:opacity-60 active:scale-[0.98] transition">
+            {downloading ? <Loader2 className="size-4 animate-spin" /> : <Download className="size-4" />}
+            {downloading ? "Rendering HD…" : "Download HD PNG"}
           </button>
-          <button onClick={tweet} className="flex-1 rounded-xl bg-gradient-to-r from-primary to-accent py-3 text-sm font-semibold inline-flex items-center justify-center gap-2">
+          <button onClick={tweet}
+            className="flex-1 rounded-xl bg-gradient-to-r from-primary via-accent to-pink-glow py-3 text-sm font-semibold inline-flex items-center justify-center gap-2 active:scale-[0.98] transition">
             <Twitter className="size-4" /> Share on X
           </button>
         </div>
         <a href={`${RITUAL_CHAIN.explorer}/tx/${data.txHash}`} target="_blank" rel="noreferrer"
-          className="block w-full rounded-xl glass py-2.5 text-xs font-mono text-center text-accent hover:text-foreground inline-flex items-center justify-center gap-2">
+          className="flex w-full rounded-xl glass py-2.5 text-xs font-mono items-center justify-center gap-2 text-accent hover:text-foreground">
           <ExternalLink className="size-3.5" /> View tx on Ritual explorer
         </a>
-        <button onClick={onClose} className="w-full text-xs text-muted-foreground">close</button>
+        <button onClick={onClose} className="w-full text-xs text-muted-foreground hover:text-foreground">close</button>
       </div>
     </div>
   );
